@@ -21,9 +21,15 @@
     <ClCompile Include="Source\FTPSite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\FTPSite.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Log.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

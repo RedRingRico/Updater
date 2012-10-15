@@ -12,10 +12,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\FTPSite.cpp" />
+    <ClCompile Include="Source\Log.cpp" />
     <ClCompile Include="Source\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\FTPSite.hpp" />
+    <ClInclude Include="..\Common\Log.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D6C688D1-185E-43C8-858C-FECDE286ED9B}</ProjectGuid>
@@ -59,7 +61,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PLATFORM_WINDOWS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../Common;./Headers</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
