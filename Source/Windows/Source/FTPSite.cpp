@@ -111,12 +111,33 @@ int FTPSite::Connect( const char *p_pAddress )
 		m_IPv6 ? "IPv6" : "IPv4" );
 
 	freeaddrinfo( pServerInfo );
+
+	return 0;
 }
 
 int FTPSite::Disconnect( )
 {
 	m_Log.Print( "[INFO] Disconnecting\n" );
 	closesocket( m_Socket );
+
+	return 0;
+}
+
+int FTPSite::SendCommand( const char *p_pCommand )
+{
+	send( m_Socket, p_pCommand, strlen( p_pCommand ), 0 );
+	m_Log.Print( "[INFO] Sending %s to server\n", p_pCommand );
+
+	return 0;
+}
+
+int FTPSite::ReceiveData( )
+{
+	char Recv[ 1024 ] = { '\0' };
+	memset( Recv, '\0', 1024 );
+	recv( m_Socket, Recv, 1024, 0 );
+
+	m_Log.Print( "[INFO] <Message from server>:\n%s\n", Recv );
 
 	return 0;
 }

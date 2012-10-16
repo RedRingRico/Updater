@@ -18,6 +18,11 @@ int main( int p_Argc, char **p_ppArgv )
 	{
 		return 1;
 	}
+
+	Site.ReceiveData( );
+	Site.SendCommand( "USER anonymous" );
+	Site.ReceiveData( );
+
 	Site.Disconnect( );
 
 	getch( );

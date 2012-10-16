@@ -19,7 +19,7 @@ public:
 	int Connect( const char *p_pAddress );
 	int Disconnect( );
 
-	int SendMessage( );
+	int SendCommand( const char *p_pCommand );
 	int ReceiveData( );
 
 private:
