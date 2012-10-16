@@ -115,7 +115,7 @@ int Log::OpenLogFile( const bool p_Backup )
 			}
 		} while( FindNextFile( Find, &FindData ) != 0 );
 
-		FindClose( &FindData );
+		FindClose( Find );
 
 		// Finally, create the new file
 		std::wstring LogFile;
@@ -131,7 +131,7 @@ int Log::OpenLogFile( const bool p_Backup )
 	}
 
 	m_LogFileHandle = CreateFile( m_LogFileName.c_str( ), GENERIC_WRITE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_NEW,
+		FILE_SHARE_READ, NULL, CREATE_NEW,
 		FILE_ATTRIBUTE_NORMAL, NULL );
 
 	if( m_LogFileHandle == INVALID_HANDLE_VALUE )
@@ -145,7 +145,7 @@ int Log::OpenLogFile( const bool p_Backup )
 void Log::CloseLogFile( )
 {
 	CloseHandle( m_LogFileHandle );
-	m_LogFileHandle = INVALID_HANDLE_VALUE;
+	//m_LogFileHandle = INVALID_HANDLE_VALUE;
 }
 
 int Log::ConvertCharToWide( const char *p_pChar, std::wstring &p_Wide )
@@ -156,7 +156,7 @@ int Log::ConvertCharToWide( const char *p_pChar, std::wstring &p_Wide )
 	{
 		return 1;
 	}
-
+	
 	wchar_t *pWide = new wchar_t[ StrLen+1 ];
 
 	int Result = MultiByteToWideChar( CP_UTF8, 0,
