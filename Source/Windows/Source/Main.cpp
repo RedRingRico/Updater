@@ -3,10 +3,13 @@
 #include <Log.hpp>
 #include <FTPSite.hpp>
 #include <conio.h>
+#include <Version.h>
 
 int main( int p_Argc, char **p_ppArgv )
 {
-	std::cout << "Updater Version 0.0.0.8 [Prototype]" << std::endl;           
+	std::cout << "Updater Version " << VERSION_MAJOR << "." <<
+		VERSION_MINOR << "." << VERSION_REVISION << "." <<
+		VERSION_BUILD << ( HG_LOCAL_MODIFICATIONS ? "M" : "" ) << std::endl;
 
 	FTPSite Site;
 
