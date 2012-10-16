@@ -5,6 +5,8 @@
 #include <winsock2.h>
 #endif
 
+#include <Log.hpp>
+
 class FTPSite
 {
 public:
@@ -13,18 +15,26 @@ public:
 
 	int Initialise( );
 
-	int Connect( );
+	// Connect using a domain name or IP address
+	int Connect( const char *p_pAddress );
 	int Disconnect( );
 
 	int SendMessage( );
 	int ReceiveData( );
 
 private:
-	WSADATA m_WSA;
+	void *GetINetAddress( const struct sockaddr *p_pAddress );
 
+
+	WSADATA m_WSA;
 	SOCKET	m_Socket;
 
 	bool m_SocketsInitialised;
+
+	char *m_pServerAddress;
+	bool m_IPv6;
+
+	Log m_Log;
 };
 
 #endif

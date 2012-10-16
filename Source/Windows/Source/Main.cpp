@@ -7,15 +7,20 @@
 int main( int p_Argc, char **p_ppArgv )
 {
 	std::cout << "Updater Version 0.0.0.1 [Prototype]" << std::endl;           
-	Log FTPLog;
-	FTPLog.SetLogFile( "testlog.log", true );
-	FTPLog.Print( "MORE OLD TEST!\n" );
 
 	FTPSite Site;
 
-	Site.Initialise( );
-	Site.Connect( );
+	if( Site.Initialise( ) != 0 )
+	{
+		return 1;
+	}
+	if( Site.Connect( "95.154.194.27" ) != 0 )
+	{
+		return 1;
+	}
 	Site.Disconnect( );
+
 	getch( );
+
 	return 0;
 }

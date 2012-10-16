@@ -51,7 +51,17 @@ int Log::Print( const char *p_pMessage, ... )
 
 	DWORD BytesWritten;
 
-	WriteFile( m_LogFileHandle, p_pMessage, strlen( p_pMessage ),
+	char CompleteMessage[ 4096 ];
+	int RetVal;
+
+	va_list ArgPtr;
+	va_start( ArgPtr, p_pMessage );
+	RetVal = vsnprintf( CompleteMessage,
+		sizeof( CompleteMessage )*sizeof( char ), p_pMessage,
+		ArgPtr );
+	va_end( ArgPtr );
+
+	WriteFile( m_LogFileHandle, CompleteMessage, strlen( CompleteMessage ),
 		&BytesWritten, NULL );
 
 	return 0;
@@ -145,7 +155,7 @@ int Log::OpenLogFile( const bool p_Backup )
 void Log::CloseLogFile( )
 {
 	CloseHandle( m_LogFileHandle );
-	//m_LogFileHandle = INVALID_HANDLE_VALUE;
+	m_LogFileHandle = INVALID_HANDLE_VALUE;
 }
 
 int Log::ConvertCharToWide( const char *p_pChar, std::wstring &p_Wide )

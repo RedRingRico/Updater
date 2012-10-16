@@ -6,6 +6,8 @@
 FTPSite::FTPSite( )
 {
 	m_SocketsInitialised = false;
+	m_IPv6 = false;
+	m_Log.SetLogFile( "ftp_information.log" );
 }
 
 FTPSite::~FTPSite( )
@@ -17,12 +19,16 @@ FTPSite::~FTPSite( )
 	}
 }
 
-void *get_in_addr(struct sockaddr *sa)
+// Return either an IPv4 or IPv6 address
+void *FTPSite::GetINetAddress( const struct sockaddr *p_pAddress )
 {
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in*)sa)->sin_addr);
+	if ( p_pAddress->sa_family == AF_INET )
+	{
+		m_IPv6 = false;
+		return &( ( ( struct sockaddr_in* )p_pAddress )->sin_addr );
 	}
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+	m_IPv6 = true;
+	return &( ( ( struct sockaddr_in6* )p_pAddress )->sin6_addr );
 }
 
 int FTPSite::Initialise( )
@@ -34,22 +40,30 @@ int FTPSite::Initialise( )
 
 	if( Error != 0 )
 	{
+		m_Log.Print( "[ERROR] Failed to initialise Windows Sockets API\n" );
 		return 1;
 	}
 
 	if( LOBYTE( m_WSA.wVersion ) != 2 || HIBYTE( m_WSA.wVersion ) != 2 )
 	{
+		m_Log.Print( "[ERROR] Windows Sockets version does not match what was"
+			" expected\n" );
 		WSACleanup( );
 		return 1;
 	}
 
 	m_SocketsInitialised = true;
-	
+	m_Log.Print( "[INFO] Initialised Windows Sockets\n" );
 }
 
-int FTPSite::Connect( )
+int FTPSite::Connect( const char *p_pAddress )
 {
-	// Connect to hard-coded server
+	if( p_pAddress == NULL || strlen( p_pAddress ) == 0 )
+	{
+		m_Log.Print( "[ERROR] Invalid address passed to Connect function\n" );
+		return 1;
+	}
+
 	struct addrinfo Hints;
 	memset( &Hints, 0, sizeof( Hints ) );
 	Hints.ai_family = AF_UNSPEC;
@@ -58,8 +72,10 @@ int FTPSite::Connect( )
 	struct addrinfo *pServerInfo = NULL, *pBest = NULL;
 	int Error = 0;
 
-	if( Error = getaddrinfo( "95.154.194.27", "21", &Hints, &pServerInfo ) != 0 )
+	if( Error = getaddrinfo( p_pAddress, "21", &Hints, &pServerInfo ) != 0 )
 	{
+		m_Log.Print( "[ERROR] Failed to get address information for %s\n",
+			p_pAddress );
 		return 1;
 	}
 
@@ -81,21 +97,26 @@ int FTPSite::Connect( )
 
 	if( pBest == NULL )
 	{
+		m_Log.Print( "[ERROR] Failed to connect to server %s\n", p_pAddress );
 		return 1;
 	}
 
-	char s[ INET6_ADDRSTRLEN ];
+	char ServerStr[ INET6_ADDRSTRLEN ];
 
-	inet_ntop( pBest->ai_family, get_in_addr( ( struct sockaddr * )pBest->ai_addr ),
-		s, sizeof( s ) );
+	inet_ntop( pBest->ai_family,
+		this->GetINetAddress( ( struct sockaddr * )pBest->ai_addr ),
+		ServerStr, sizeof( ServerStr ) );
 
-	std::cout << "Connecting to " << s << std::endl;
+	m_Log.Print( "[INFO] Connecting to %s:21 [%s]\n", ServerStr,
+		m_IPv6 ? "IPv6" : "IPv4" );
+
 	freeaddrinfo( pServerInfo );
 }
 
 int FTPSite::Disconnect( )
 {
-	std::cout << "Disconnecting" << std::endl;
+	m_Log.Print( "[INFO] Disconnecting\n" );
 	closesocket( m_Socket );
+
 	return 0;
 }
