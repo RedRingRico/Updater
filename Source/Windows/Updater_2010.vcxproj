@@ -18,6 +18,7 @@
   <ItemGroup>
     <ClInclude Include="..\Common\FTPSite.hpp" />
     <ClInclude Include="..\Common\Log.hpp" />
+    <ClInclude Include="..\Common\Main.hpp" />
     <ClInclude Include="Headers\resource.h" />
     <ClInclude Include="Headers\Version.h" />
   </ItemGroup>

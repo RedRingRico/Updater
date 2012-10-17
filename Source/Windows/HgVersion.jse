@@ -1,7 +1,9 @@
-var FSO =	new ActiveXObject( "Scripting.FileSystemObject" );
+// Credit for code goes to Zach Burlingame
+// http://www.zachburlingame.com/2011/02/integrating-the-mercurial-revision-into-the-version-automatically
+var FileSystem =	new ActiveXObject( "Scripting.FileSystemObject" );
 var Shell =	new ActiveXObject( "WScript.Shell" );
 
-var OutFile = FSO.CreateTextFile( "./Headers/HgVersion.h", true );
+var OutFile = FileSystem.CreateTextFile( "./Headers/HgVersion.h", true );
 
 var RevNum					= Shell.Exec( "hg identify -n" );
 var Rev						= RevNum.StdOut.ReadAll( );

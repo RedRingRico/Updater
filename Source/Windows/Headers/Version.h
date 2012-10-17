@@ -1,11 +1,9 @@
+// Credit for code to Zach Burlingame
+// http://www.zachburlingame.com/2011/02
+
 #ifndef __UPDATER_VERSION_HPP__ 
 #define __UPDATER_VERSION_HPP__ 
-/* 
-const int Major = 0; 
-const int Minor = 0; 
-const int Version = 0; 
-const int Revision = 5; 
-*/
+
 #include "HgVersion.h"
 
 #define STRINGISE2( s ) #s
