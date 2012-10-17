@@ -48,7 +48,7 @@ int Log::SetLogFile( const char *p_pLogFileName, const bool p_Backup )
 
 	SAFE_DELETE_ARRAY( pLogFileName );
 
-	return OpenLogFile( p_Backup );
+	return this->OpenLogFile( p_Backup );
 }
 
 int Log::Print( const char *p_pMessage, ... )

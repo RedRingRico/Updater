@@ -3,6 +3,7 @@
 #include <Log.hpp>
 #include <FTPSite.hpp>
 #include <conio.h>
+#include <ConfigFile.hpp>
 
 int main( int p_Argc, char **p_ppArgv )
 {
@@ -18,6 +19,12 @@ int main( int p_Argc, char **p_ppArgv )
 	{
 		return 1;
 	}
+
+	CONFIG_PARAMETERS CfgParams;
+	memset( &CfgParams, 0, sizeof( CfgParams ) );
+	ConfigFile TestFile( L"test.cfg" );
+	TestFile.Parse( &CfgParams );
+
 
 	Site.ReceiveData( NULL );
 	Site.SendCommand( "USER anonymous\r\n" );
