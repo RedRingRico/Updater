@@ -11,11 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Commands.cpp" />
     <ClCompile Include="Source\FTPSite.cpp" />
     <ClCompile Include="Source\Log.cpp" />
     <ClCompile Include="Source\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\Commands.hpp" />
     <ClInclude Include="..\Common\FTPSite.hpp" />
     <ClInclude Include="..\Common\Log.hpp" />
     <ClInclude Include="..\Common\Main.hpp" />
