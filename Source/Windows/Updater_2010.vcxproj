@@ -11,13 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\ConfigFile.cpp" />
     <ClCompile Include="Source\FTPSite.cpp" />
     <ClCompile Include="Source\Log.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\ConfigFile.hpp" />
     <ClInclude Include="..\Common\FTPSite.hpp" />
     <ClInclude Include="..\Common\Log.hpp" />
+    <ClInclude Include="..\Common\Utility.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D6C688D1-185E-43C8-858C-FECDE286ED9B}</ProjectGuid>
