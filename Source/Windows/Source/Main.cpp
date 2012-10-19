@@ -20,10 +20,16 @@ int main( int p_Argc, char **p_ppArgv )
 		return 1;
 	}
 
-	CONFIG_PARAMETERS CfgParams;
-	memset( &CfgParams, 0, sizeof( CfgParams ) );
-	ConfigFile TestFile( L"test.cfg" );
-	TestFile.Parse( &CfgParams );
+	ConfigFile TestFile( "test.cfg" );
+	if( TestFile.Parse( ) != 0 )
+	{
+		return 1;
+	}
+
+	std::string Value;
+	// Print the site
+	TestFile.GetValue( "site", Value );
+	std::cout << Value.c_str( ) << std::endl;
 
 
 	Site.ReceiveData( NULL );

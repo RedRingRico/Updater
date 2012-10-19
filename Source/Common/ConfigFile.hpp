@@ -3,38 +3,41 @@
 
 #include <Windows.h>
 #include <string>
-
-typedef struct __CONFIG_PARAMETERS
-{
-	char *pHost;
-	char *pProject;
-	char *pBuildType;
-	char Port;
-	bool ActiveMode;
-	int PortRange[ 2 ];
-	bool OutputDownloadSummary;
-}CONFIG_PARAMETERS;
+#include <map>
 
 class ConfigFile
 {
 public:
 	ConfigFile( );
-	ConfigFile( const wchar_t *p_pConfigFile );
+	ConfigFile( const char *p_pConfigFile );
 
 	~ConfigFile( );
 
-	int SetConfigFile( const wchar_t *p_pConfigFile );
+	int SetConfigFile( const char *p_pConfigFile );
 
-	int Parse( CONFIG_PARAMETERS *p_pParameters );
+	int Parse( );
+
+	int GetValue( const std::string &p_Option, std::string &p_Value );
+
+	void GetOptionValue( const size_t p_Index, std::string &p_Option,
+		std::string &p_Value );
 
 private:
+	void RemoveWhitespace( std::string &p_String, const bool p_Front = true,
+		const bool p_Back = true );
 
 #ifdef PLATFORM_LINUX
+	FILE *m_pFile;
 #elif PLATFORM_WINDOWS
 	HANDLE m_FileHandle;
 	std::wstring m_FileName;
 #endif
+	
+	// Save some typing!
+	typedef std::map< std::string, std::string > OptionValueMap;
+	typedef std::map< std::string, std::string >::iterator OptionValueItr;
 
+	OptionValueMap m_OptionValue;
 };
 
 #endif

@@ -9,21 +9,44 @@ ConfigFile::ConfigFile( )
 	m_FileHandle = INVALID_HANDLE_VALUE;
 }
 
-ConfigFile::ConfigFile( const wchar_t *p_pConfigFile )
+ConfigFile::ConfigFile( const char *p_pConfigFile )
 {
 	m_FileHandle = INVALID_HANDLE_VALUE;
 
+	wchar_t *pCfgFile = NULL;
+	ConvertCharToWide( p_pConfigFile, &pCfgFile );
+
 	m_FileName.empty( );
-	m_FileName.append( p_pConfigFile );
+	m_FileName.append( pCfgFile );
+
+	SAFE_DELETE_ARRAY( pCfgFile );
 }
 
 ConfigFile::~ConfigFile( )
 {
 }
 
-int ConfigFile::Parse( CONFIG_PARAMETERS *p_pParameters )
+int ConfigFile::SetConfigFile( const char *p_pConfigFile )
 {
-	if( m_FileName.empty( ) || p_pParameters == NULL )
+	wchar_t *pTmpFile = NULL;
+
+	if( ConvertCharToWide( p_pConfigFile, &pTmpFile ) != 0 )
+	{
+		SAFE_DELETE_ARRAY( pTmpFile );
+		return 1;
+	}
+
+	m_FileName.empty( );
+	m_FileName.append( pTmpFile );
+
+	SAFE_DELETE_ARRAY( pTmpFile );
+
+	return 0;
+}
+
+int ConfigFile::Parse( )
+{
+	if( m_FileName.empty( ) )
 	{
 		return 1;
 	}
@@ -65,6 +88,11 @@ int ConfigFile::Parse( CONFIG_PARAMETERS *p_pParameters )
 			if( LineCount != 0 )
 			{
 				CharStart++;
+			}
+
+			if( i == FileSize-1 )
+			{
+				++CharEnd;
 			}
 
 			char *pLine = new char [ ( CharEnd - CharStart ) + 1 ];
@@ -151,7 +179,6 @@ int ConfigFile::Parse( CONFIG_PARAMETERS *p_pParameters )
 	// Process the key-value pairs assumedly left
 	std::list< std::string >::iterator Itr = FileLines.begin( );
 
-	LineCount = 0;
 	for( ; Itr != FileLines.end( ); ++Itr )
 	{
 		size_t Delimiter = ( *Itr ).find_first_of( "=" );
@@ -162,9 +189,9 @@ int ConfigFile::Parse( CONFIG_PARAMETERS *p_pParameters )
 			Key = ( *Itr ).substr( 0, Delimiter );
 			Value = ( *Itr ).substr( Delimiter+1 );
 
-			std::cout << "[" << LineCount << "] " << "Key: " << Key.c_str( ) <<
-				"\t\t\tValue: " << Value.c_str( ) << std::endl;
-			++LineCount;
+			this->RemoveWhitespace( Key );
+			this->RemoveWhitespace( Value );
+			m_OptionValue[ Key ] = Value;
 		}
 	}
 
@@ -174,4 +201,79 @@ int ConfigFile::Parse( CONFIG_PARAMETERS *p_pParameters )
 	m_FileHandle = INVALID_HANDLE_VALUE;
 
 	return 0;
+}
+
+int ConfigFile::GetValue( const std::string &p_Option, std::string &p_Value )
+{
+	OptionValueItr Itr = m_OptionValue.find( p_Option );
+
+	if( Itr != m_OptionValue.end( ) )
+	{
+		p_Value = Itr->second;
+
+		return 0;
+	}
+
+	return 1;
+}
+
+void ConfigFile::GetOptionValue( const size_t p_Index, std::string &p_Option,
+	std::string &p_Value )
+{
+	if( p_Index > 0 && p_Index < m_OptionValue.size( ) )
+	{
+		OptionValueItr Itr = m_OptionValue.begin( );
+
+		for( size_t i = 0; i < p_Index; ++i )
+		{
+			++Itr;
+		}
+
+		p_Option = Itr->first;
+		p_Value = Itr->second;
+	}
+}
+
+void ConfigFile::RemoveWhitespace( std::string &p_String, const bool p_Front,
+	const bool p_Back )
+{
+	if( !p_String.empty( ) )
+	{
+		size_t WhitePos = 0;
+
+		// Remove leading whitespace
+		if( p_Front )
+		{
+			WhitePos = p_String.find_first_not_of( " \t" );
+
+			if( WhitePos != std::string::npos )
+			{
+				p_String.erase( 0, WhitePos );
+			}
+		}
+
+		// Remove trailing whitespace
+		if( p_Back )
+		{
+			std::string::reverse_iterator RItr = p_String.rbegin( );
+			size_t CurPos = 0;
+
+			if( *RItr == ' ' || *RItr == '\t' )
+			{
+				// Keep going until a non-whitespace character is encountered
+				++RItr;
+				for( ; RItr != p_String.rend( );++ RItr )
+				{
+					++CurPos;
+					if( *RItr != ' ' && *RItr != '\t' )
+					{
+						WhitePos = p_String.size( ) - CurPos;
+						break;
+					}
+				}
+
+				p_String.erase( WhitePos );
+			}
+		}
+	}
 }
