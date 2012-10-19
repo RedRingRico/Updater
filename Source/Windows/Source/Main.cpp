@@ -3,11 +3,17 @@
 #include <Log.hpp>
 #include <FTPSite.hpp>
 #include <conio.h>
+#include <Version.h>
+#include <Commands.hpp>
+
 #include <ConfigFile.hpp>
 
 int main( int p_Argc, char **p_ppArgv )
 {
-	std::cout << "Updater Version 0.0.0.1 [Prototype]" << std::endl;           
+	std::cout << "Updater Version " << VERSION_MAJOR << "." <<
+		VERSION_MINOR << "." << VERSION_REVISION << "." <<
+		VERSION_BUILD << ( HG_LOCAL_MODIFICATIONS ? "M" : "" ) << std::endl;
+
 
 	FTPSite Site;
 
@@ -39,28 +45,17 @@ int main( int p_Argc, char **p_ppArgv )
 	Site.ReceiveData( NULL );
 	Site.SendCommand( "SYST\r\n" );
 	Site.ReceiveData( NULL );
-	//Site.SendCommand( "AUTH TLS\r\n" );
-	//Site.ReceiveData( );
 	Site.SendCommand( "FEAT\r\n" );
 	Site.ReceiveData( NULL );
 	Site.SendCommand( "TYPE I\r\n" );
 	Site.ReceiveData( NULL );
-	//Site.SendCommand( "PORT 192,168,2,16,57,218\r\n" );
-	//Site.ReceiveData( );
-	/*Site.SendCommand( "PASV\r\n" );
-	Site.ReceiveData( NULL );
-	/*Site.SendCommand( "PWD\r\n" );
-	Site.ReceiveData( );
-	Site.SendCommand( "HELP\r\n" );
-	Site.ReceiveData( );
-	Site.SendCommand( "LIST\r\n" );
-	Site.ReceiveData( );*/
 	std::string *pDirectory = NULL;
 	Site.ListCurrentDirectory( pDirectory );
 	Site.SendCommand( "QUIT\r\n" );
 	Site.ReceiveData( NULL );
 	Site.Disconnect( );
 
+	std::cout << "Press any key to exit" << std::endl;
 	getch( );
 
 	return 0;
