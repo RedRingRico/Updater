@@ -108,3 +108,64 @@ int GetConfigFile( const char *p_pArg, char **p_pConfigFile )
 void DisplayUsage( )
 {
 }
+
+
+Commands::Commands( )
+{
+}
+
+Commands::~Commands( )
+{
+}
+
+int Commands::Add( const std::string &p_Name, const COMMAND_FUNCTION p_Function,
+	const size_t p_ParamCount, const PARAM_TYPE *p_pParamList )
+{
+	// Make sure the function isn't already defined
+	std::list< COMMAND >::iterator CmdItr = m_Commands.begin( );
+
+	for( ; CmdItr != m_Commands.end( ); ++CmdItr )
+	{
+		if( ( *CmdItr ).Name.compare( p_Name ) == 0 )
+		{
+			return 1;
+		}
+	}
+	COMMAND TmpCmd;
+	memset( &TmpCmd, 0, sizeof( COMMAND ) );
+
+	TmpCmd.Function = p_Function;
+	TmpCmd.ParamCount = p_ParamCount;
+	TmpCmd.pParams = const_cast< PARAM_TYPE* >( p_pParamList );
+	TmpCmd.Name = p_Name;
+
+	m_Commands.push_back( TmpCmd ); 
+
+	return 0;
+}
+
+void Commands::GetCommandList( std::list< std::string > &p_Commands )
+{
+	std::list< COMMAND >::iterator Itr = m_Commands.begin( );
+
+	for( ; Itr != m_Commands.end( ); ++Itr )
+	{
+		p_Commands.push_front( ( *Itr ).Name );
+	}
+}
+
+int Commands::Execute( const char *p_pCommandName, const void *p_pParameters )
+{
+	std::list< COMMAND >::iterator Itr = m_Commands.begin( );
+	for( ; Itr != m_Commands.end( ); ++Itr )
+	{
+		if( ( *Itr ).Name.compare( p_pCommandName ) == 0 )
+		{
+			int Result = 
+				( *Itr ).Function( const_cast< void * >( p_pParameters ) );
+			return Result;
+		}
+	}
+
+	return 1;
+}

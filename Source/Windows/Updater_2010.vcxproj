@@ -16,6 +16,7 @@
     <ClCompile Include="Source\FTPSite.cpp" />
     <ClCompile Include="Source\Log.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\ProgramCommands.cpp" />
     <ClCompile Include="Source\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -24,6 +25,7 @@
     <ClInclude Include="..\Common\FTPSite.hpp" />
     <ClInclude Include="..\Common\Log.hpp" />
     <ClInclude Include="..\Common\Main.hpp" />
+    <ClInclude Include="..\Common\ProgramCommands.hpp" />
     <ClInclude Include="Headers\resource.h" />
     <ClInclude Include="Headers\Version.h" />
   </ItemGroup>

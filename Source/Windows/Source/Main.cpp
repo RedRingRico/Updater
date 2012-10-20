@@ -4,9 +4,8 @@
 #include <FTPSite.hpp>
 #include <conio.h>
 #include <Version.h>
-#include <Commands.hpp>
-
 #include <ConfigFile.hpp>
+#include <Main.hpp>
 
 int main( int p_Argc, char **p_ppArgv )
 {
@@ -14,7 +13,13 @@ int main( int p_Argc, char **p_ppArgv )
 		VERSION_MINOR << "." << VERSION_REVISION << "." <<
 		VERSION_BUILD << ( HG_LOCAL_MODIFICATIONS ? "M" : "" ) << std::endl;
 
+	if( SetupCommands( ) != 0 )
+	{
+		return 0;
+	}
+
 	std::string ConfigurationPath;
+	g_LineCommands.Execute( "Usage", NULL );
 	ConfigurationPath.clear( );
 	ConfigFile Configuration;
 
@@ -28,6 +33,7 @@ int main( int p_Argc, char **p_ppArgv )
 	}
 
 	std::string Value;
+
 	// Print the site
 	Configuration.GetValue( "site", Value );
 	std::cout << Value.c_str( ) << std::endl;
@@ -62,6 +68,13 @@ int main( int p_Argc, char **p_ppArgv )
 */
 	std::cout << "Press any key to exit" << std::endl;
 	getch( );
+
+	return 0;
+}
+
+int SetupCommands( )
+{
+	g_LineCommands.Add( "Usage", DisplayUsage, 0, NULL );
 
 	return 0;
 }
