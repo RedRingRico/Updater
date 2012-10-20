@@ -6,6 +6,8 @@
 #include <Version.h>
 #include <ConfigFile.hpp>
 #include <Main.hpp>
+#include <ProgramCommands.hpp>
+
 
 int main( int p_Argc, char **p_ppArgv )
 {
@@ -17,9 +19,15 @@ int main( int p_Argc, char **p_ppArgv )
 	{
 		return 0;
 	}
+	Updater::ProgramCommands TestCmds;
+
+	TestCmds.Initialise( );
+	int ParamCount = 0;
+	TestCmds.GetCommandParamCount( "n", &ParamCount );
+	TestCmds.Execute( "n", "1024:10000" );
 
 	// Set the global configuration options to their default values
-	g_Site.clear( );
+/*	g_Site.clear( );
 	g_Port.clear( );
 	g_Project.clear( );
 	g_Platform.clear( );
@@ -55,7 +63,7 @@ int main( int p_Argc, char **p_ppArgv )
 			// Try and get the values, if none exist, no problem
 			if( Configuration.GetValue( "site", Value ) == 0 )
 			{
-				g_Site = Value;
+				g_LineCommands.Execute( "Site", Value.c_str( ) );
 			}
 			if( Configuration.GetValue( "port", Value ) == 0 )
 			{
@@ -63,34 +71,11 @@ int main( int p_Argc, char **p_ppArgv )
 			}
 			if( Configuration.GetValue( "active", Value ) == 0 )
 			{
-				size_t i = Value.compare( "false" );
-				if( Value.compare( "true" ) == 0 )
-				{
-					g_ActiveMode = true;
-				}
-				else if( Value.compare( "false" ) == 0 )
-				{
-					g_ActiveMode = false;
-				}
+				g_LineCommands.Execute( "ActiveMode", Value.c_str( ) );
 			}
 			if( Configuration.GetValue( "port_range", Value ) == 0 )
 			{
-				// Get the delimited values, then try to convert them to
-				// their integer values
-				std::string Port1, Port2;
-				size_t Delimiter = 0;
-				Delimiter = Value.find_first_of( ":" );
-				if( Delimiter != std::string::npos )
-				{
-					Port1 = Value.substr( 0, Delimiter );
-					Port2 = Value.substr( Delimiter+1, Value.size( ) );
-					int PortA, PortB;
-					PortA = atoi( Port1.c_str( ) );
-					PortB = atoi( Port2.c_str( ) );
-
-					g_PortRange.Port[ 0 ] = PortA;
-					g_PortRange.Port[ 1 ] = PortB;
-				}
+				g_LineCommands.Execute( "PortRange", Value.c_str( ) );
 			}
 			if( Configuration.GetValue( "project", Value ) == 0 )
 			{
@@ -111,10 +96,53 @@ int main( int p_Argc, char **p_ppArgv )
 		}
 	}
 
-	std::string Value;
-	int PortRange[ 2 ] = { 40000, 40010 };
-	g_LineCommands.Execute( "Site", g_Site.c_str( ) );
-	g_LineCommands.Execute( "PortRange", PortRange );
+	// Read any parameters from the command line and execute them
+	if( p_Argc > 1 )
+	{
+		for( size_t i = 1; i < p_Argc; ++i )
+		{
+			std::string Arg = p_ppArgv[ i ];
+			char *pCommand = NULL;
+			// Is this a valid command line parameter?
+			if( GetCommandLineParameter( Arg.c_str( ), &pCommand )
+				!= INVALID_COMMAND )
+			{
+				g_LineCommands.Execute( pCommand, p_ppArgv[ i+1 ] );
+			}
+		}
+	}
+
+	std::cout << "Configuration information" << std::endl << std::endl;
+	std::cout << "Server name: " << g_Site << std::endl;
+	std::cout << "Server port: " << g_Port << std::endl;
+	if( g_ActiveMode )
+	{
+		std::cout << "Active mode" << std::endl;
+		std::cout << "\tPort range: " << g_PortRange.Port[ 0 ] <<
+			":" << g_PortRange.Port[ 1 ] << std::endl;
+	}
+	else
+	{
+		std::cout << "Passive mode" << std::endl;
+	}
+	if( !g_Project.empty( ) )
+	{
+		std::cout << "Project: " << g_Project << std::endl;
+	}
+	if( !g_Platform.empty( ) )
+	{
+		std::cout << "Platform: "<< g_Platform << std::endl;
+	}
+	if( !g_BuildType.empty( ) )
+	{
+		std::cout << "Build Type: " << g_BuildType << std::endl;
+	}
+	if( !g_DownloadSummary.empty( ) )
+	{
+		std::cout << "Download Summary File: " << g_DownloadSummary <<
+			std::endl << std::endl;
+	}
+	*/
 	/*
 	FTPSite Site;
 
@@ -156,12 +184,20 @@ int main( int p_Argc, char **p_ppArgv )
 
 int SetupCommands( )
 {
-	g_LineCommands.Add( "Usage", DisplayUsage, 0, NULL );
-	PARAM_TYPE SiteParams = PARAM_STRING;
-	PARAM_TYPE PortParams [ 2 ] = { PARAM_INTEGER, PARAM_INTEGER };
-	g_LineCommands.Add( "Site", SetSite, 1, &SiteParams );
-	g_LineCommands.Add( "PortRange", SetPortRange, 2, PortParams );
-
+	PARAM_TYPE OneString = PARAM_STRING;
+	PARAM_TYPE OneBool = PARAM_BOOLEAN;
+	PARAM_TYPE PortRange [ 2 ] = { PARAM_INTEGER, PARAM_INTEGER };
+/*	g_LineCommands.Add( "Usage", Updater::DisplayUsage, 0, NULL );
+	g_LineCommands.Add( "Site",  Updater::SetSite, 1, &OneString );
+	g_LineCommands.Add( "Port",  Updater::SetPortCmd, 1, &OneString );
+	g_LineCommands.Add( "ActiveMode",  Updater::SetActiveMode, 1, &OneBool );
+	g_LineCommands.Add( "PortRange",  Updater::SetPortRange, 2, PortRange );
+	g_LineCommands.Add( "Project",  Updater::SetProject, 1, &OneString );
+	g_LineCommands.Add( "Platform",  Updater::SetPlatform, 1, &OneString );
+	g_LineCommands.Add( "BuildType",  Updater::SetBuildType, 1, &OneString );
+	g_LineCommands.Add( "DownloadSummary",  Updater::SetDownloadSummary, 1,
+		&OneString );
+		*/
 	return 0;
 }
 

@@ -24,23 +24,12 @@ enum
 // Returns the integer value from the command line
 int GetCommandLineParameter( const char *p_pArg, char **p_ppParameter );
 
-int GetConfigFile( const char *p_pParameter, char **p_pConfigFile );
-int GetSite( const char *p_pParameter, char **p_pSite );
-int GetPort( const char *p_pParameter, char **p_pPort );
-int GetProject( const char *p_pParameter, char **p_pProject );
-int GetPlatform( const char *p_pParameter, char **p_pPlatform );
-int GetBuildType( const char *p_pParameter, char **p_pBuildType );
-int GetDownloadSummary( const char *p_pParameter, char **p_pDownloadSummary );
-int GetActiveMode( const char *p_pParameter, bool &p_ActiveMode );
-int GetPortRange( const char *p_pParameter, int **p_pRange );
-
-void DisplayUsage( );
-
-typedef int ( *COMMAND_FUNCTION )( void *p_pParameters );
+typedef int ( *COMMAND_FUNCTION )( const char *p_pParameters );
 
 typedef enum __PARAM_TYPE
 {
 	PARAM_INTEGER	= 1,
+	PARAM_BOOLEAN,
 	PARAM_FLOAT,
 	PARAM_STRING,
 	PARAM_UNKNOWN,
@@ -48,29 +37,44 @@ typedef enum __PARAM_TYPE
 
 typedef struct __COMMAND
 {
-	// name function num params param list
-	std::string			Name;
+	// The function name to call the function by
+	std::string			FunctionName;
+	// The command-line equivalents for calling the function
+	// (both the long and one-character versions)
+	std::string			CommandName;
+	std::string			ShortCmdName;
+	// The actual function to call
 	COMMAND_FUNCTION	Function;
+	// How many parameters this function takes and the type
 	size_t				ParamCount;
 	PARAM_TYPE			*pParams;
 }COMMAND;
 
-class Commands
+namespace Updater
 {
-public:
-	Commands( );
-	~Commands( );
+	class Command
+	{
+	public:
+		Command( );
+		~Command( );
 
-	int Add( const std::string &p_Name, const COMMAND_FUNCTION p_Function,
-		const size_t p_ParamCount, const PARAM_TYPE *p_pParamList );
+		virtual int Add( const std::string &p_FunctionName,
+			const std::string &p_CommandName, const std::string &p_ShortCmdName,
+			const COMMAND_FUNCTION p_Function,
+			const size_t p_ParamCount, const PARAM_TYPE *p_pParams );
 
-	void GetCommandList( std::list< std::string > &p_Commands );
+		// Use this to determine how many ppargv[ n ]'s to read
+		virtual void GetCommandParamCount( std::string p_Command,
+			int *p_pCount );
+		virtual void GetCommandList( std::list< std::string > &p_Commands );
 
-	int Execute( const char *p_pCommandName,
-		const void *p_pParameters );
+		virtual int Execute( const char *p_pCommandName,
+			const char *p_pParameters );
 
-private:
-	std::list< COMMAND > m_Commands;
-};
+	protected:
+		typedef std::list< COMMAND >::iterator CommandItr;
+		std::list< COMMAND > m_Commands;
+	};
+}
 
 #endif
