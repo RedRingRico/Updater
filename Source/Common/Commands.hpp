@@ -4,20 +4,22 @@
 #include <list>
 
 // Integer values of command-line arguments
-const int COMMAND_CONFIG_FILE		= 0;
-const int COMMAND_SITE				= 1;
-const int COMMAND_PORT				= 2;
-const int COMMAND_PROJECT			= 3;
-const int COMMAND_PLATFORM			= 4;
-const int COMMAND_BUILD_TYPE		= 5;
-const int COMMAND_DOWNLOAD_SUMMARY	= 6;
-const int COMMAND_ACTIVE_MODE		= 7;
-const int COMMAND_PORT_RANGE		= 8;
-const int COMMAND_USAGE				= 9;
 const int INVALID_COMMAND			= 0xFFFFFFFF;
 
-const int MAX_COMMANDS	= 10;
-
+enum
+{
+	COMMAND_CONFIG_FILE = 0,
+	COMMAND_SITE,
+	COMMAND_PORT,
+	COMMAND_PROJECT,
+	COMMAND_PLATFORM,
+	COMMAND_BUILD_TYPE,
+	COMMAND_DOWNLOAD_SUMMARY,
+	COMMAND_ACTIVE_MODE,
+	COMMAND_PORT_RANGE,
+	COMMAND_USAGE,
+	MAX_COMMANDS
+};
 
 // Returns the integer value from the command line
 int GetCommandLineParameter( const char *p_pArg, char **p_ppParameter );

@@ -191,6 +191,7 @@ int ConfigFile::Parse( )
 
 			this->RemoveWhitespace( Key );
 			this->RemoveWhitespace( Value );
+
 			m_OptionValue[ Key ] = Value;
 		}
 	}
@@ -240,6 +241,13 @@ void ConfigFile::RemoveWhitespace( std::string &p_String, const bool p_Front,
 	if( !p_String.empty( ) )
 	{
 		size_t WhitePos = 0;
+
+		// First, make sure the line's carrige return is handled
+		size_t RC = p_String.find_first_of( "\r" );
+		if( RC != std::string::npos )
+		{
+			p_String.erase( RC );
+		}
 
 		// Remove leading whitespace
 		if( p_Front )

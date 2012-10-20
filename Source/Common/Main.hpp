@@ -8,4 +8,6 @@ static Commands g_LineCommands;
 
 int SetupCommands( );
 
+void CleanupGlobals( );
+
 #endif
