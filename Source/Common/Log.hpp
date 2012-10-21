@@ -25,19 +25,10 @@ private:
 #ifdef PLATFORM_LINUX
 	FILE *m_pLogFile;
 #elif PLATFORM_WINDOWS
-	int ConvertCharToWide( const char *p_pChar, std::wstring &p_Wide );
 
 	HANDLE m_LogFileHandle;
 	std::wstring m_LogFileName;
 #endif
 };
-/*
-class __LogAccessException : public std::exception
-{
-	virtual const char *what( ) const throw( )
-	{
-		return "Could not open file";
-	}
-} LogAccessException;
-*/
+
 #endif

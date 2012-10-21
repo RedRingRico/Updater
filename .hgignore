@@ -20,4 +20,5 @@ glob:Release
 glob:*.~lock.*
 glob:*.swp
 glob:*.docstates
-
+glob:*.aps
+glob:*.pch

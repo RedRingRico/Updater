@@ -1,0 +1,39 @@
+// Credit for code goes to Zach Burlingame
+// http://www.zachburlingame.com/2011/02/integrating-the-mercurial-revision-into-the-version-automatically
+var FileSystem =	new ActiveXObject( "Scripting.FileSystemObject" );
+var Shell =	new ActiveXObject( "WScript.Shell" );
+
+var OutFile = FileSystem.CreateTextFile( "./Headers/HgVersion.h", true );
+
+var RevNum					= Shell.Exec( "hg identify -n" );
+var Rev						= RevNum.StdOut.ReadAll( );
+var HgRevision				= String( Rev ).replace( /\n/g, "" ).replace( /\+/g, "" );
+var HgLocalModifications	= 0;
+
+if( String( Rev ).replace( /\n/g, "" ).indexOf( "+" ) != -1 )
+{
+	HgLocalModifications = 1;
+}
+OutFile.WriteLine( "#ifndef __UPDATER_HGVERSION_HPP__" );
+OutFile.WriteLine( "#define __UPDATER_HGVERSION_HPP__" );
+OutFile.WriteLine( "" );
+OutFile.WriteLine( "#define HG_REVISION				" + HgRevision );
+OutFile.WriteLine( "#define HG_LOCAL_MODIFICATIONS	" + HgLocalModifications );
+
+
+var HgChangeSet 	= Shell.Exec( "hg parents --template \"{node}\"" );
+var ChangeSet		= HgChangeSet.StdOut.ReadAll( );
+var Hg_ChangeSet	= String( ChangeSet ).replace( /\n/g, "" );
+OutFile.WriteLine( "#define HG_CHANGESET			\"" + Hg_ChangeSet + "\"" );
+
+var HgChangeSetShort	= Shell.Exec( "hg parents --template \"{node|short}\"" );
+var ChangeSetShort		= HgChangeSetShort.StdOut.ReadAll( );
+var Hg_ChangeSetShort	= "#define HG_CHANGESET_SHORT		\"" + String( ChangeSetShort ).replace( /\n/g, "" ) + "\"";
+
+OutFile.WriteLine( Hg_ChangeSetShort );
+
+OutFile.WriteLine( "" );
+OutFile.WriteLine( "#endif" );
+OutFile.WriteLine( "" );
+
+OutFile.Close( );

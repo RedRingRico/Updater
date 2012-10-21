@@ -1,5 +1,6 @@
 #include <Log.hpp>
 #include <iostream>
+#include <Utility.hpp>
 
 Log::Log( )
 {
@@ -14,7 +15,12 @@ Log::Log( const char *p_pLogFileName )
 
 	if( NameLength != 0 )
 	{
-		this->ConvertCharToWide( p_pLogFileName, m_LogFileName );
+		wchar_t *pLogFileName = NULL;
+		::ConvertCharToWide( p_pLogFileName, &pLogFileName );
+		m_LogFileName.clear( );
+		m_LogFileName.append( pLogFileName );
+
+		SAFE_DELETE_ARRAY( pLogFileName );
 	}
 }
 
@@ -34,9 +40,15 @@ int Log::SetLogFile( const char *p_pLogFileName, const bool p_Backup )
 		return 1;
 	}
 
-	this->ConvertCharToWide( p_pLogFileName, m_LogFileName );
+	wchar_t *pLogFileName = NULL;
+	ConvertCharToWide( p_pLogFileName, &pLogFileName );
 
-	return OpenLogFile( p_Backup );
+	m_LogFileName.clear( );
+	m_LogFileName.append( pLogFileName );
+
+	SAFE_DELETE_ARRAY( pLogFileName );
+
+	return this->OpenLogFile( p_Backup );
 }
 
 int Log::Print( const char *p_pMessage, ... )
@@ -156,70 +168,4 @@ void Log::CloseLogFile( )
 {
 	CloseHandle( m_LogFileHandle );
 	m_LogFileHandle = INVALID_HANDLE_VALUE;
-}
-
-int Log::ConvertCharToWide( const char *p_pChar, std::wstring &p_Wide )
-{
-	size_t StrLen = strlen( p_pChar );
-
-	if( StrLen == 0 )
-	{
-		return 1;
-	}
-	
-	wchar_t *pWide = new wchar_t[ StrLen+1 ];
-
-	int Result = MultiByteToWideChar( CP_UTF8, 0,
-		p_pChar, StrLen, pWide, StrLen );
-	if( Result != StrLen )
-	{
-		DWORD Error = GetLastError( );
-
-		switch( Error )
-		{
-		case ERROR_INSUFFICIENT_BUFFER:
-			{
-				std::cout << "[ERROR] A supplied buffer was not large enough "
-					"or set to NULL" << std::endl;
-				break;
-			}
-		case ERROR_INVALID_FLAGS:
-			{
-				std::cout << "[ERROR] The values supplied by the flags were not"
-					" valid" << std::endl;
-				break;
-			}
-		case ERROR_INVALID_PARAMETER:
-			{
-				std::cout << "[ERROR] Any of the parameter values were invalid"
-					<< std::endl;
-				break;
-			}
-		case ERROR_NO_UNICODE_TRANSLATION:
-			{
-				std::cout << "[ERROR] Invalid Unicode was found in a string"
-					<< std::endl;
-				break;
-			}
-		default:
-			{
-				std::cout << "Unknown error" << std::endl;
-				break;
-			}
-		}
-
-		delete [ ] pWide;
-		pWide = NULL;
-
-		return 1;
-	}
-
-	pWide[ StrLen ] = L'\0';
-	p_Wide.clear( );
-	p_Wide = pWide;
-
-	delete [ ] pWide;
-	pWide = NULL;
-
-	return 0;
 }
