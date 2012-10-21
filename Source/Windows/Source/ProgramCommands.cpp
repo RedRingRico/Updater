@@ -55,27 +55,46 @@ namespace Updater
 		PARAM_TYPE OneString = PARAM_STRING;
 		PARAM_TYPE OneInt = PARAM_INTEGER;
 
-		//m_SetPort = ( CLASS_COMMAND_FUNCTION )&(SetPort);
+		m_ConfigurationFile.clear( );
+		m_Site.clear( );
+		m_Port.clear( );
+		m_Project.clear( );
+		m_Platform.clear( );
+		m_BuildType.clear( );
+		m_DownloadSummary.clear( );
 
-		this->Add( "Usage", "usage", "u", DisplayUsage, 0, NULL, this );
-		this->Add( "Site", "site", "s", SetSite, 1, &OneString, this );
-		this->Add( "Port", "port", "p", SetPort, 1, &OneString, this );
-		this->Add( "ActiveMode", "active-mode", "a", SetActiveMode, 0, 0,
+		m_Site.append( "opengamedevelopers.org" );
+		m_Port.append( "21" );
+		m_ConfigurationFile.append( "default.cfg" );
+
+		m_PortRange.Port[ 0 ] = 40000;
+		m_PortRange.Port[ 1 ] = 40010;
+
+		m_ActiveMode = false;
+
+		this->Add( "Usage", "--usage", "-u", DisplayUsage, 0, NULL, this );
+		this->Add( "ConfigurationFile", "--config-file", "-f",
+			SetConfigurationFile, 1, &OneString, this );
+		this->Add( "Site", "--site", "-s", SetSite, 1, &OneString, this );
+		this->Add( "Port", "--port", "-p", SetPort, 1, &OneString, this );
+		this->Add( "ActiveMode", "--active-mode", "-a", SetActiveMode, 0, 0,
 			this );
-		this->Add( "PortRange", "port-range", "n",  SetPortRange, 1, &OneInt,
+		this->Add( "PortRange", "--port-range", "-n",  SetPortRange, 1, &OneInt,
 			this );
-		this->Add( "Project", "project", "r", SetProject, 1, &OneString, this );
-		this->Add( "Platform", "platform", "m", SetPlatform, 1, &OneString,
+		this->Add( "Project", "--project", "-r", SetProject, 1, &OneString,
 			this );
-		this->Add( "BuildType", "build-type", "t", SetBuildType, 1, &OneString,
+		this->Add( "Platform", "--platform", "-m", SetPlatform, 1, &OneString,
+			this );
+		this->Add( "BuildType", "--build-type", "-t", SetBuildType, 1, &OneString,
 			this);
-		this->Add( "DownloadSummary", "output-download-summary", "o",
+		this->Add( "DownloadSummary", "--output-download-summary", "-o",
 			SetDownloadSummary, 1, &OneString, this );
+
 		return 0;
 	}
 
 	int ProgramCommands::Execute( const char *p_pCommandName,
-		const char *p_pParameters )
+		const char **p_pParameters )
 	{
 		std::list< CLASS_COMMAND >::iterator Itr = m_ClassCommands.begin( );
 		for( ; Itr != m_ClassCommands.end( ); ++Itr )
@@ -126,64 +145,67 @@ namespace Updater
 	{
 	}
 
-	int DisplayUsage( const char *pNULL, ProgramCommands *p_pSelf )
+	int DisplayUsage( const char **pNULL, ProgramCommands *p_pSelf )
 	{
 		std::cout << "USAGE" << std::endl;
 		return 0;
 	}
 
-	int SetConfigurationFile( const char *p_pFileName,
+	int SetConfigurationFile( const char **p_pFileName,
 		ProgramCommands *p_pSelf )
 	{
-		if( p_pFileName == NULL || strlen( p_pFileName ) == 0 )
+		if( p_pFileName == NULL || strlen( ( *p_pFileName ) ) == 0 )
 		{
 			return 1;
 		}
 
 		p_pSelf->m_ConfigurationFile.clear( );
-		p_pSelf->m_ConfigurationFile.append( p_pFileName );
+		p_pSelf->m_ConfigurationFile.append( ( *p_pFileName ) );
 
 		return 0;
 	}
 
-	int SetSite( const char *p_pSite, ProgramCommands *p_pSelf )
+	int SetSite( const char **p_pSite, ProgramCommands *p_pSelf )
 	{
-		if( p_pSite == NULL || strlen( p_pSite ) == 0 )
+		if( p_pSite == NULL || strlen( ( *p_pSite ) ) == 0 )
 		{
 			return 1;
 		}
 
 		p_pSelf->m_Site.clear( );
-		p_pSelf->m_Site.append( p_pSite );
+		p_pSelf->m_Site.append( ( *p_pSite ) );
 
 		return 0;
 	}
 
-	int SetPort( const char *p_pPort, ProgramCommands *p_pSelf )
+	int SetPort( const char **p_pPort, ProgramCommands *p_pSelf )
 	{
-		if( p_pPort == NULL || strlen( p_pPort ) == 0 )
+		if( p_pPort == NULL || strlen( ( *p_pPort ) ) == 0 )
 		{
 			return 1;
 		}
 		
 		p_pSelf->m_Port.clear( );
-		p_pSelf->m_Port.append( p_pPort );
+		p_pSelf->m_Port.append( ( *p_pPort ) );
 
 		return 0;
 	}
 
-	int SetActiveMode( const char *p_pMode, ProgramCommands *p_pSelf )
+	int SetActiveMode( const char **p_ppMode, ProgramCommands *p_pSelf )
 	{
-		if( p_pMode == NULL || strlen( p_pMode ) == 0 )
+		// Assume that this was passed in from the command line which does
+		// not take a parameter
+		if( p_ppMode == NULL || strlen( ( *p_ppMode ) ) == 0 )
 		{
-			return 1;
+			p_pSelf->m_ActiveMode = true;
+			return 0;
 		}
 
-		if( strcmp( p_pMode, "true" ) == 0 )
+		if( strcmp( ( *p_ppMode ), "true" ) == 0 )
 		{
 			p_pSelf->m_ActiveMode = true;
 		}
-		else if( strcmp( p_pMode, "false" ) == 0 )
+		else if( strcmp( ( *p_ppMode ), "false" ) == 0 )
 		{
 			p_pSelf->m_ActiveMode = false;
 		}
@@ -191,13 +213,18 @@ namespace Updater
 		return 0;
 	}
 
-	int SetPortRange( const char *p_pPortRange, ProgramCommands *p_pSelf )
+	int SetPortRange( const char **p_pPortRange, ProgramCommands *p_pSelf )
 	{
+		if( p_pPortRange == NULL || strlen( ( *p_pPortRange ) ) == 0 )
+		{
+			return 1;
+		}
+
 		// Get the delimited values, then try to convert them to
 		// their integer values
 		std::string Port1, Port2, Range;
 		Range.clear( );
-		Range.append( p_pPortRange );
+		Range.append( ( *p_pPortRange ) );
 		size_t Delimiter = 0;
 		Delimiter = Range.find_first_of( ":" );
 		if( Delimiter != std::string::npos )
@@ -210,50 +237,55 @@ namespace Updater
 		return 0;
 	}
 
-	int SetProject( const char *p_pProject, ProgramCommands *p_pSelf )
+	int SetProject( const char **p_pProject, ProgramCommands *p_pSelf )
 	{
+		if( p_pProject == NULL || strlen( ( *p_pProject ) ) == 0 )
+		{
+			return 1;
+		}
+
 		p_pSelf->m_Project.clear( );
-		p_pSelf->m_Project.append( p_pProject );
+		p_pSelf->m_Project.append( ( *p_pProject ) );
 
 		return 0;
 	}
 
-	int SetPlatform( const char *p_pPlatform, ProgramCommands *p_pSelf )
+	int SetPlatform( const char **p_pPlatform, ProgramCommands *p_pSelf )
 	{
-		if( p_pPlatform == NULL || strlen( p_pPlatform ) == 0 )
+		if( p_pPlatform == NULL || strlen( ( *p_pPlatform ) ) == 0 )
 		{
 			return 1;
 		}
 
 		p_pSelf->m_Platform.clear( );
-		p_pSelf->m_Platform.append( p_pPlatform );
+		p_pSelf->m_Platform.append( ( *p_pPlatform ) );
 
 		return 0;
 	}
 
-	int SetBuildType( const char *p_pBuildType, ProgramCommands *p_pSelf )
+	int SetBuildType( const char **p_pBuildType, ProgramCommands *p_pSelf )
 	{
-		if( p_pBuildType == NULL || strlen( p_pBuildType ) == 0 )
+		if( p_pBuildType == NULL || strlen( ( *p_pBuildType ) ) == 0 )
 		{
 			return 1;
 		}
 
 		p_pSelf->m_BuildType.clear( );
-		p_pSelf->m_BuildType.append( p_pBuildType );
+		p_pSelf->m_BuildType.append( ( *p_pBuildType ) );
 
 		return 0;
 	}
 
-	int SetDownloadSummary( const char *p_pDownloadSummary,
+	int SetDownloadSummary( const char **p_pDownloadSummary,
 		ProgramCommands *p_pSelf )
 	{
-		if( p_pDownloadSummary == NULL || strlen( p_pDownloadSummary ) == 0 )
+		if( p_pDownloadSummary == NULL || strlen( ( *p_pDownloadSummary ) ) == 0 )
 		{
 			return 1;
 		}
 
 		p_pSelf->m_DownloadSummary.clear( );
-		p_pSelf->m_DownloadSummary.append( p_pDownloadSummary );
+		p_pSelf->m_DownloadSummary.append( ( *p_pDownloadSummary ) );
 
 		return 0;
 	}

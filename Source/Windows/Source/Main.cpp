@@ -7,6 +7,7 @@
 #include <ConfigFile.hpp>
 #include <Main.hpp>
 #include <ProgramCommands.hpp>
+#include <Utility.hpp>
 
 
 int main( int p_Argc, char **p_ppArgv )
@@ -15,87 +16,179 @@ int main( int p_Argc, char **p_ppArgv )
 		VERSION_MINOR << "." << VERSION_REVISION << "." <<
 		VERSION_BUILD << ( HG_LOCAL_MODIFICATIONS ? "M" : "" ) << std::endl;
 
-	if( SetupCommands( ) != 0 )
+	Updater::ProgramCommands Commands;
+
+	Commands.Initialise( );
+
+	// Get the configuration file from the command line
+	if( p_Argc > 1 )
 	{
-		return 0;
+		for( size_t i = 1; i < p_Argc; ++i )
+		{
+			std::string Arg = p_ppArgv[ i ];
+			char *pCommand = NULL;
+			// Is this a valid command line parameter?
+			if( ( Arg.compare( "--config-file" ) == 0 ) ||
+				( Arg.compare( "-f" ) == 0 ) )
+			{
+				int ParamCount = 0;
+				Commands.GetCommandParamCount( Arg.c_str( ), &ParamCount );
+				char **ppParams = NULL;
+
+				if( ParamCount > 0 )
+				{
+					ppParams = new char*[ ParamCount ];
+					for( int j = 1; j < ParamCount+1; ++j )
+					{
+						if( j+i == p_Argc )
+						{
+							for( size_t t = 0; t < j; ++t )
+							{
+								SAFE_DELETE_ARRAY( ppParams[ j ] );
+							}
+
+							SAFE_DELETE_ARRAY( ppParams );
+							break;
+						}
+						int ParamPos = j-1;
+						size_t ArgLen = strlen( p_ppArgv[ i+j ] );
+						ppParams[ ParamPos ] = new char[ ArgLen+1 ];
+						strncpy( ppParams[ ParamPos ], p_ppArgv[ i+j ],
+							ArgLen );
+						ppParams[ ParamPos ][ ArgLen ] = '\0';
+					}
+				}
+				else
+				{
+					// Make sure that ppParams[ n ] doesn't get deleted as it
+					// doesn't exist
+					ParamCount = 0;
+				}
+
+				Commands.Execute( Arg.c_str( ),
+					const_cast< const char ** >( ppParams ) );
+
+				for( size_t j = 0; j < ParamCount; ++j )
+				{
+					SAFE_DELETE_ARRAY( ppParams[ j ] );
+				}
+
+				SAFE_DELETE_ARRAY( ppParams );
+
+				// Done, don't load another configuration file
+				break;
+			}
+		}
 	}
-	Updater::ProgramCommands TestCmds;
-
-	TestCmds.Initialise( );
-	int ParamCount = 0;
-	TestCmds.GetCommandParamCount( "n", &ParamCount );
-	TestCmds.Execute( "n", "1024:10000" );
-
-	// Set the global configuration options to their default values
-/*	g_Site.clear( );
-	g_Port.clear( );
-	g_Project.clear( );
-	g_Platform.clear( );
-	g_BuildType.clear( );
-	g_DownloadSummary.clear( );
-
-	g_Site.append( "opengamedevelopers.org" );
-	g_Port.append( "21" );
-
-	g_PortRange.Port[ 0 ] = 40000;
-	g_PortRange.Port[ 1 ] = 40010;
-	
-	g_ActiveMode = false;
 
 	std::string ConfigurationPath;
 	ConfigurationPath.clear( );
 
 	ConfigFile Configuration;
 
+	if( strlen( Commands.GetConfigurationFile( ) ) != 0 )
+	{
+		ConfigurationPath.append( Commands.GetConfigurationFile( ) );
+	}
+
 	if( ConfigurationPath.empty( ) )
 	{
 		Configuration.SetConfigFile( "default.cfg" );
-		if( Configuration.Parse( ) != 0 )
-		{
-			std::cout << "Could not find file default.cfg" << std::endl;
-		}
-		else
-		{
-			Configuration.Parse( );
-			std::string Value;
-			Value.clear( );
-
-			// Try and get the values, if none exist, no problem
-			if( Configuration.GetValue( "site", Value ) == 0 )
-			{
-				g_LineCommands.Execute( "Site", Value.c_str( ) );
-			}
-			if( Configuration.GetValue( "port", Value ) == 0 )
-			{
-				g_Port = Value;
-			}
-			if( Configuration.GetValue( "active", Value ) == 0 )
-			{
-				g_LineCommands.Execute( "ActiveMode", Value.c_str( ) );
-			}
-			if( Configuration.GetValue( "port_range", Value ) == 0 )
-			{
-				g_LineCommands.Execute( "PortRange", Value.c_str( ) );
-			}
-			if( Configuration.GetValue( "project", Value ) == 0 )
-			{
-				g_Project = Value;
-			}
-			if( Configuration.GetValue( "platform", Value ) == 0 )
-			{
-				g_Platform = Value;
-			}
-			if( Configuration.GetValue( "build_type", Value ) == 0 )
-			{
-				g_BuildType = Value;
-			}
-			if( Configuration.GetValue( "download_summary", Value ) == 0 )
-			{
-				g_DownloadSummary = Value;
-			}
-		}
+	}
+	else
+	{
+		Configuration.SetConfigFile( ConfigurationPath.c_str( ) );
 	}
 
+	if( Configuration.Parse( ) != 0 )
+	{
+		std::cout << "Could not find file " << ConfigurationPath << std::endl;
+	}
+	else
+	{
+		Configuration.Parse( );
+		std::string Value;
+		Value.clear( );
+
+		// CLEANUP!
+		// The code below is repeated an awful lot.  It would be better to
+		// procedurally get the value from the configuration file, then
+		// use the value in the Commands.Execute function
+		// !CLEANUP
+
+		// Try and get the values, if none exist, no problem
+		if( Configuration.GetValue( "site", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "Site", const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+		if( Configuration.GetValue( "port", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "Port", const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+		if( Configuration.GetValue( "active", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "ActiveMode",
+				const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+		if( Configuration.GetValue( "port_range", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "PortRange",
+				const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+		if( Configuration.GetValue( "project", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "Project",
+				const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+		if( Configuration.GetValue( "platform", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "Platform",
+				const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+		if( Configuration.GetValue( "build_type", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "BuildType",
+				const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+		if( Configuration.GetValue( "download_summary", Value ) == 0 )
+		{
+			char *pValue = new char[ Value.size( )+1 ];
+			strncpy( pValue, Value.c_str( ), Value.size( ) );
+			pValue[ Value.size( ) ] = '\0';
+			Commands.Execute( "DownloadSummary",
+				const_cast< const char ** >( &pValue ) );
+			SAFE_DELETE_ARRAY( pValue );
+		}
+	}
+	/*
 	// Read any parameters from the command line and execute them
 	if( p_Argc > 1 )
 	{
@@ -107,42 +200,89 @@ int main( int p_Argc, char **p_ppArgv )
 			if( GetCommandLineParameter( Arg.c_str( ), &pCommand )
 				!= INVALID_COMMAND )
 			{
-				g_LineCommands.Execute( pCommand, p_ppArgv[ i+1 ] );
+				int ParamCount = 0;
+				Commands.GetCommandParamCount( Arg.c_str( ), &ParamCount );
+				char **ppParams = NULL;
+
+				if( ParamCount > 0 )
+				{
+					ppParams = new char*[ ParamCount ];
+					for( int j = 1; j < ParamCount+1; ++j )
+					{
+						if( j+i == p_Argc )
+						{
+							for( size_t t = 0; t < j; ++t )
+							{
+								SAFE_DELETE_ARRAY( ppParams[ j ] );
+							}
+
+							SAFE_DELETE_ARRAY( ppParams );
+							break;
+						}
+						int ParamPos = j-1;
+						size_t ArgLen = strlen( p_ppArgv[ i+j ] );
+						ppParams[ ParamPos ] = new char[ ArgLen+1 ];
+						strncpy( ppParams[ ParamPos ], p_ppArgv[ i+j ],
+							ArgLen );
+						ppParams[ ParamPos ][ ArgLen ] = '\0';
+					}
+				}
+				else
+				{
+					// Make sure that ppParams[ n ] doesn't get deleted as it
+					// doesn't exist
+					ParamCount = 0;
+				}
+
+				Commands.Execute( pCommand,
+					const_cast< const char ** >( ppParams ) );
+
+				for( size_t j = 0; j < ParamCount; ++j )
+				{
+					SAFE_DELETE_ARRAY( ppParams[ j ] );
+				}
+
+				SAFE_DELETE_ARRAY( ppParams );
+
+				i += ParamCount;
 			}
 		}
-	}
+	}*/
 
 	std::cout << "Configuration information" << std::endl << std::endl;
-	std::cout << "Server name: " << g_Site << std::endl;
-	std::cout << "Server port: " << g_Port << std::endl;
-	if( g_ActiveMode )
+	std::cout << "Server name: " << Commands.GetSite( ) << std::endl;
+	std::cout << "Server port: " << Commands.GetPort( ) << std::endl;
+	if( Commands.GetActiveMode( ) )
 	{
 		std::cout << "Active mode" << std::endl;
-		std::cout << "\tPort range: " << g_PortRange.Port[ 0 ] <<
-			":" << g_PortRange.Port[ 1 ] << std::endl;
+		int *pPorts = new int[ 2 ];
+		Commands.GetPortRange( &pPorts );
+		std::cout << "\tPort range: " << pPorts[ 0 ] <<
+			":" << pPorts[ 1 ] << std::endl;
+		SAFE_DELETE_ARRAY( pPorts );
 	}
 	else
 	{
 		std::cout << "Passive mode" << std::endl;
 	}
-	if( !g_Project.empty( ) )
+	if( strlen( Commands.GetProject( ) ) != 0 )
 	{
-		std::cout << "Project: " << g_Project << std::endl;
+		std::cout << "Project: " << Commands.GetProject( ) << std::endl;
 	}
-	if( !g_Platform.empty( ) )
+	if( strlen( Commands.GetPlatform( ) ) != 0 )
 	{
-		std::cout << "Platform: "<< g_Platform << std::endl;
+		std::cout << "Platform: "<< Commands.GetPlatform( ) << std::endl;
 	}
-	if( !g_BuildType.empty( ) )
+	if( strlen( Commands.GetBuildType( ) ) != 0 )
 	{
-		std::cout << "Build Type: " << g_BuildType << std::endl;
+		std::cout << "Build Type: " << Commands.GetBuildType( ) << std::endl;
 	}
-	if( !g_DownloadSummary.empty( ) )
+	if( strlen( Commands.GetDownloadSummary( ) ) != 0)
 	{
-		std::cout << "Download Summary File: " << g_DownloadSummary <<
-			std::endl << std::endl;
+		std::cout << "Download Summary File: " << Commands.GetDownloadSummary( )
+			<< std::endl << std::endl;
 	}
-	*/
+	
 	/*
 	FTPSite Site;
 
@@ -177,30 +317,5 @@ int main( int p_Argc, char **p_ppArgv )
 	std::cout << "Press any key to exit" << std::endl;
 	getch( );
 
-	CleanupGlobals( );
-
 	return 0;
-}
-
-int SetupCommands( )
-{
-	PARAM_TYPE OneString = PARAM_STRING;
-	PARAM_TYPE OneBool = PARAM_BOOLEAN;
-	PARAM_TYPE PortRange [ 2 ] = { PARAM_INTEGER, PARAM_INTEGER };
-/*	g_LineCommands.Add( "Usage", Updater::DisplayUsage, 0, NULL );
-	g_LineCommands.Add( "Site",  Updater::SetSite, 1, &OneString );
-	g_LineCommands.Add( "Port",  Updater::SetPortCmd, 1, &OneString );
-	g_LineCommands.Add( "ActiveMode",  Updater::SetActiveMode, 1, &OneBool );
-	g_LineCommands.Add( "PortRange",  Updater::SetPortRange, 2, PortRange );
-	g_LineCommands.Add( "Project",  Updater::SetProject, 1, &OneString );
-	g_LineCommands.Add( "Platform",  Updater::SetPlatform, 1, &OneString );
-	g_LineCommands.Add( "BuildType",  Updater::SetBuildType, 1, &OneString );
-	g_LineCommands.Add( "DownloadSummary",  Updater::SetDownloadSummary, 1,
-		&OneString );
-		*/
-	return 0;
-}
-
-void CleanupGlobals( )
-{
 }

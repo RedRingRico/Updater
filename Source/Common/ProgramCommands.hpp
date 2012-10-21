@@ -13,7 +13,7 @@ namespace Updater
 {
 	class ProgramCommands : public Command
 	{
-		typedef int ( *CLASS_COMMAND_FUNCTION )( const char *p_pParameters,
+		typedef int ( *CLASS_COMMAND_FUNCTION )( const char **p_pParameters,
 			ProgramCommands *p_pSelf );
 			typedef struct __CLASS_COMMAND
 		{
@@ -41,7 +41,22 @@ namespace Updater
 		virtual void GetCommandList( std::list< std::string > &p_Commands );
 
 		virtual int Execute( const char *p_pCommandName,
-			const char *p_pParameters );
+			const char **p_pParameters );
+
+		// Accessors for the configuration data
+		const char *GetConfigurationFile( )
+			{ return m_ConfigurationFile.c_str( ); }
+		const char *GetSite( ){ return m_Site.c_str( ); }
+		const char *GetPort( ){ return m_Port.c_str( ); }
+		const char *GetProject( ){ return m_Project.c_str( ); }
+		const char *GetPlatform( ){ return m_Platform.c_str( ); }
+		const char *GetBuildType( ){ return m_BuildType.c_str( ); }
+		const char *GetDownloadSummary( ){ return m_DownloadSummary.c_str( ); }
+
+		const void GetPortRange( int **p_pPorts )
+			{	( *p_pPorts )[ 0 ] = m_PortRange.Port[ 0 ];
+				( *p_pPorts )[ 1 ] = m_PortRange.Port[ 1 ]; }
+		const bool GetActiveMode( ){ return m_ActiveMode; }
 
 	private:
 		virtual int Add( const std::string &p_FunctionName,
@@ -50,23 +65,23 @@ namespace Updater
 			const size_t p_ParamCount, const PARAM_TYPE *p_pParams,
 			ProgramCommands *p_pSelf );
 
-		friend int DisplayUsage( const char *p_pNULL,
+		friend int DisplayUsage( const char **p_pNULL,
 			ProgramCommands *p_pSelf );
-		friend int SetConfigurationFile( const char *p_pFileName,
+		friend int SetConfigurationFile( const char **p_pFileName,
 			ProgramCommands *p_pSelf );
-		friend int SetSite( const char *p_pSite, ProgramCommands *p_pSelf );
-		friend int SetPort( const char *p_pPort, ProgramCommands *p_pSelf );
-		friend int SetActiveMode( const char *p_pMode,
+		friend int SetSite( const char **p_pSite, ProgramCommands *p_pSelf );
+		friend int SetPort( const char **p_pPort, ProgramCommands *p_pSelf );
+		friend int SetActiveMode( const char **p_ppMode,
 			ProgramCommands *p_pSelf );
-		friend int SetPortRange( const char *p_pPortRange,
+		friend int SetPortRange( const char **p_pPortRange,
 			ProgramCommands *p_pSelf );
-		friend int SetProject( const char *p_pProject,
+		friend int SetProject( const char **p_pProject,
 			ProgramCommands *p_pSelf );
-		friend int SetPlatform( const char *p_pPlatform,
+		friend int SetPlatform( const char **p_pPlatform,
 			ProgramCommands *p_pSelf );
-		friend int SetBuildType( const char *p_pType,
+		friend int SetBuildType( const char **p_pType,
 			ProgramCommands *p_pSelf );
-		friend int SetDownloadSummary( const char *p_pDownloadSummary,
+		friend int SetDownloadSummary( const char **p_pDownloadSummary,
 			ProgramCommands *p_pSelf );	
 
 		PORTRANGE m_PortRange;
@@ -78,8 +93,6 @@ namespace Updater
 		std::string m_Platform;
 		std::string m_BuildType;
 		std::string m_DownloadSummary;
-
-		COMMAND_FUNCTION m_SetPort;
 
 		bool m_ActiveMode;
 

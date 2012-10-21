@@ -24,7 +24,7 @@ enum
 // Returns the integer value from the command line
 int GetCommandLineParameter( const char *p_pArg, char **p_ppParameter );
 
-typedef int ( *COMMAND_FUNCTION )( const char *p_pParameters );
+typedef int ( *COMMAND_FUNCTION )( const char **p_pParameters );
 
 typedef enum __PARAM_TYPE
 {
@@ -69,7 +69,7 @@ namespace Updater
 		virtual void GetCommandList( std::list< std::string > &p_Commands );
 
 		virtual int Execute( const char *p_pCommandName,
-			const char *p_pParameters );
+			const char **p_pParameters );
 
 	protected:
 		typedef std::list< COMMAND >::iterator CommandItr;

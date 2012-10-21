@@ -196,7 +196,7 @@ namespace Updater
 	}
 
 	int Command::Execute( const char *p_pCommandName,
-		const char *p_pParameters )
+		const char **p_pParameters )
 	{
 		std::list< COMMAND >::iterator Itr = m_Commands.begin( );
 		for( ; Itr != m_Commands.end( ); ++Itr )
