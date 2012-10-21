@@ -2,21 +2,25 @@
 #include <iostream>
 #include <Log.hpp>
 #include <FTPSite.hpp>
-#include <conio.h>
 #include <Version.h>
 #include <ConfigFile.hpp>
 #include <Main.hpp>
 #include <ProgramCommands.hpp>
 #include <Utility.hpp>
+#include <CursesHelper.hpp>
+#include <curses.h>
 
 
 int main( int p_Argc, char **p_ppArgv )
 {
-	std::cout << "Updater Version " << VERSION_MAJOR << "." <<
-		VERSION_MINOR << "." << VERSION_REVISION << "." <<
-		VERSION_BUILD << ( HG_LOCAL_MODIFICATIONS ? "M" : "" ) << std::endl;
+	StartCURSES( );
+
+	printw( "Updater | Version %d.%d.%d.%d%s\n", VERSION_MAJOR, VERSION_MINOR,
+		VERSION_REVISION, VERSION_BUILD, HG_LOCAL_MODIFICATIONS ? "M" : "" );
 
 	Updater::ProgramCommands Commands;
+	
+	StopCURSES( );
 
 	Commands.Initialise( );
 
@@ -188,7 +192,7 @@ int main( int p_Argc, char **p_ppArgv )
 			SAFE_DELETE_ARRAY( pValue );
 		}
 	}
-	/*
+	
 	// Read any parameters from the command line and execute them
 	if( p_Argc > 1 )
 	{
@@ -247,7 +251,7 @@ int main( int p_Argc, char **p_ppArgv )
 				i += ParamCount;
 			}
 		}
-	}*/
+	}
 
 	std::cout << "Configuration information" << std::endl << std::endl;
 	std::cout << "Server name: " << Commands.GetSite( ) << std::endl;
