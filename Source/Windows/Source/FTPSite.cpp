@@ -1,11 +1,11 @@
 #undef UNICODE
 #include <FTPSite.hpp>
 #include <ws2tcpip.h>
-#include <iostream>
+#include <Utility.hpp>
 
 FTPSite::FTPSite( )
 {
-	m_Passive = true;
+	m_ActiveMode = false;
 	m_SocketsInitialised = false;
 	m_IPv6 = false;
 	m_Log.SetLogFile( "ftp_information.log" );
@@ -95,7 +95,7 @@ int FTPSite::ConnectTo( SOCKET &p_Socket, const std::string p_IPAddr,
 	return 0;
 }
 
-int FTPSite::Initialise( const bool p_Passive )
+int FTPSite::Initialise( const bool p_ActiveMode )
 {
 	WORD Version;
 	Version = MAKEWORD( 2, 2 );
@@ -119,7 +119,7 @@ int FTPSite::Initialise( const bool p_Passive )
 	m_SocketsInitialised = true;
 	m_Log.Print( "[INFO] Initialised Windows Sockets\n" );
 
-	m_Passive = p_Passive;
+	m_ActiveMode = p_ActiveMode;
 
 	return 0;
 }
@@ -177,7 +177,10 @@ int FTPSite::ReceiveData( char *p_pData )
 
 int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
 {
-	if( m_Passive )
+	if( m_ActiveMode )
+	{
+	}
+	else
 	{
 		this->SendCommand( "PASV\r\n" );
 		char RawBuffer[ 1024 ] = { '\0' };
@@ -229,13 +232,11 @@ int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
 		p_pIPAddr->append( IPAddr );
 		p_pPort->append( PortStr );
 	}
-	else
-	{
-	}
+	
 	return 0;
 }
 
-int FTPSite::ListCurrentDirectory( std::string *p_pResults )
+int FTPSite::ListCurrentDirectory( std::list< std::string > &p_Results )
 {
 	std::string IPAddr, Port;
 
@@ -258,6 +259,47 @@ int FTPSite::ListCurrentDirectory( std::string *p_pResults )
 	char Recv[ 1024 ] = { '\0' };
 	memset( Recv, '\0', 1024 );
 	recv( Site, Recv, 1024, 0 );
+
+	// Take the directories, ignore the current and parent directories
+	size_t Items = 0;
+	size_t CharStart = 0, CharEnd = 0;
+	for( size_t i = 0; i < sizeof( Recv ); ++i )
+	{
+		if( Recv[ i ] == '\n' )
+		{
+			char *pTmpBuff = new char[ ( CharEnd-CharStart )+1 ];
+			strncpy( pTmpBuff, Recv+CharStart, ( CharEnd-CharStart ) );
+			pTmpBuff[ ( CharEnd-CharStart ) ] = '\0';
+
+			// Remove any CRs
+			for( size_t j = 0; j < strlen( pTmpBuff ); ++j )
+			{
+				if( pTmpBuff[ j ] == 0xD )
+				{
+					pTmpBuff[ j ] = '\0';
+				}
+			}
+
+			if( ( strcmp( pTmpBuff, "." ) == 0 ) ||
+				( strcmp( pTmpBuff, ".." ) == 0 ) )
+			{
+
+				SAFE_DELETE_ARRAY( pTmpBuff );
+				CharStart = ++CharEnd;
+				continue;
+			}
+			p_Results.push_back( pTmpBuff );
+			CharStart = ++CharEnd;
+			++Items;
+			SAFE_DELETE_ARRAY( pTmpBuff );
+			continue;
+		}
+		if( Recv[ i ] == '\0' )
+		{
+			break;
+		}
+		++CharEnd;
+	}
 
 	m_Log.Print( "[INFO] <Message from server>:\n%s\n", Recv );
 

@@ -32,13 +32,7 @@ int main( int p_Argc, char **p_ppArgv )
 		Title.str( ).c_str( ) );
 	attroff( COLOR_PAIR( 1 ) );
 	attroff( A_BOLD );
-	//waddwstr( stdscr, L"TEXT\n" );
-	Print( MSG_NORMAL, stdscr, L"NORMAL TEXT | A number: %d | A string: \" %ls\" | A float: %f\n",
-		10, L"I am painting your face", 8.12f );
-	Print( MSG_INFO, stdscr, L"INFORMATION TEXT\n" );
-	Print( MSG_WARNING, stdscr, L"WARNING TEXT\n" );
-	Print( MSG_ERROR, stdscr, L"ERROR TEXT\n\n" );
-
+	
 	Updater::ProgramCommands Commands;
 
 	Commands.Initialise( );
@@ -307,19 +301,35 @@ int main( int p_Argc, char **p_ppArgv )
 	}
 	printw( "\n" );
 	refresh( );
-	/*
+	
 	FTPSite Site;
 
-	if( Site.Initialise( ) != 0 )
+	if( Site.Initialise( Commands.GetActiveMode( ) ) != 0 )
 	{
-		CleanupGlobals( );
+		Print( MSG_ERROR, stdscr,
+			L"Failed to initilaise FTP server settings\n" );
+		StopCURSES( );
 		return 1;
 	}
-	if( Site.Connect( g_Site.c_str( ) ) != 0 )
+	wchar_t *pSite = NULL;
+	ConvertCharToWide( Commands.GetSite( ), &pSite );
+	Print( MSG_NORMAL, stdscr, L"Connecting to: %s", pSite );
+	if( Site.Connect( Commands.GetSite( ) ) != 0 )
 	{
-		CleanupGlobals( );
+		Print( MSG_ERROR, stdscr, L"\nFailed to connect to: %ls\n", pSite );
+		SAFE_DELETE_ARRAY( pSite );
+
+		StopCURSES( );
 		return 1;
 	}
+
+	int CurY = 0;
+	int CurX = 0;
+	getyx( stdscr, CurY, CurX );
+	MVPrint( CurY, ScreenSize[ 0 ]-strlen( "[OK]" ), MSG_INFO,
+		stdscr, L"[OK]" );
+
+	SAFE_DELETE_ARRAY( pSite );
 
 	Site.ReceiveData( NULL );
 	Site.SendCommand( "USER anonymous\r\n" );
@@ -332,12 +342,26 @@ int main( int p_Argc, char **p_ppArgv )
 	Site.ReceiveData( NULL );
 	Site.SendCommand( "TYPE I\r\n" );
 	Site.ReceiveData( NULL );
-	std::string *pDirectory = NULL;
-	Site.ListCurrentDirectory( pDirectory );
+	std::list< std::string > Directory;
+	Site.ListCurrentDirectory( Directory );
+
+	if( Directory.size( ) > 0 )
+	{
+		std::list< std::string >::iterator Itr = Directory.begin( );
+		Print( MSG_NORMAL, stdscr, L"Directory contents\n" );
+
+		for( ; Itr != Directory.end( ); ++Itr )
+		{
+			wchar_t *pDir = NULL;
+			ConvertCharToWide( ( *Itr ).c_str( ), &pDir );
+			Print( MSG_NORMAL, stdscr, L"\t>%ls\n", pDir );
+			SAFE_DELETE_ARRAY( pDir );
+		}
+	}
+
 	Site.SendCommand( "QUIT\r\n" );
 	Site.ReceiveData( NULL );
 	Site.Disconnect( );
-*/
 
 	StopCURSES( );
 
