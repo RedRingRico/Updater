@@ -8,11 +8,21 @@ FTPSite::FTPSite( )
 	m_ActiveMode = false;
 	m_SocketsInitialised = false;
 	m_IPv6 = false;
+	m_pServerAddress = NULL;
+	m_pPort = NULL;
 	m_Log.SetLogFile( "ftp_information.log" );
 }
 
 FTPSite::~FTPSite( )
 {
+	if( m_pServerAddress )
+	{
+		SAFE_DELETE_ARRAY( m_pPort );
+	}
+	if( m_pPort )
+	{
+		SAFE_DELETE_ARRAY( m_pPort );
+	}
 	if( m_SocketsInitialised == true )
 	{
 		closesocket( m_Socket );
@@ -90,6 +100,8 @@ int FTPSite::ConnectTo( SOCKET &p_Socket, const std::string p_IPAddr,
 	m_Log.Print( "[INFO] Connected to %s [%s]\n", ServerStr, 
 		m_IPv6 ? "IPv6" : "IPv4" );
 
+	// Send the commands to begin interacting with the FTP site
+
 	freeaddrinfo( pServer );
 
 	return 0;
@@ -124,19 +136,40 @@ int FTPSite::Initialise( const bool p_ActiveMode )
 	return 0;
 }
 
-int FTPSite::Connect( const char *p_pAddress )
+int FTPSite::Connect( )
 {
-	if( p_pAddress == NULL || strlen( p_pAddress ) == 0 )
+	if( m_pServerAddress == NULL || strlen( m_pServerAddress ) == 0 )
 	{
 		m_Log.Print( "[ERROR] Invalid address passed to Connect function\n" );
 		return 1;
 	}
 
-	if( this->ConnectTo( m_Socket, p_pAddress, "21" ) != 0 )
+	if( m_pPort == NULL || strlen( m_pPort ) == 0 )
+	{
+		m_pPort = new char[ 3 ];
+		strncpy( m_pPort, "21\0", 3 );
+	}
+
+	if( this->ConnectTo( m_Socket, m_pServerAddress, m_pPort ) != 0 )
 	{
 		m_Log.Print( "[ERROR] Could not create socket\n" );
 		return 1;
 	}
+
+	// Send the login details for the main client part of the connection,
+	// get some details about the server, and set the transmission type to
+	// 8-bit binary
+	this->ReceiveData( NULL );
+	this->SendCommand( "USER anonymous" );
+	this->ReceiveData( NULL );
+	this->SendCommand( "PASS anonymous@anyone.com" );
+	this->ReceiveData( NULL );
+	this->SendCommand( "SYST" );
+	this->ReceiveData( NULL );
+	this->SendCommand( "FEAT" );
+	this->ReceiveData( NULL );
+	this->SendCommand( "TYPE I" );
+	this->ReceiveData( NULL );
 
 	return 0;
 }
@@ -144,6 +177,9 @@ int FTPSite::Connect( const char *p_pAddress )
 int FTPSite::Disconnect( )
 {
 	m_Log.Print( "[INFO] Disconnecting\n" );
+	this->SendCommand( "QUIT" );
+	this->ReceiveData( NULL );
+
 	closesocket( m_Socket );
 
 	return 0;
@@ -154,23 +190,26 @@ int FTPSite::SendCommand( const char *p_pCommand )
 	m_Log.Print( "[INFO] Sending %s to server\n", p_pCommand );
 	std::string Command( p_pCommand );
 	Command.append( "\r\n" );
-	send( m_Socket, Command.c_str( ), strlen( p_pCommand ), 0 );
+	send( m_Socket, Command.c_str( ), Command.size( ), 0 );
 
 	return 0;
 }
 
-int FTPSite::ReceiveData( char *p_pData )
+int FTPSite::ReceiveData( char *p_pData, const size_t p_BufferSize )
 {
-	char Recv[ 1024 ] = { '\0' };
-	memset( Recv, '\0', 1024 );
-	recv( m_Socket, Recv, 1024, 0 );
+	char *pRecv = new char [ p_BufferSize ];
+	memset( pRecv, '\0', p_BufferSize );
+
+	recv( m_Socket, pRecv, p_BufferSize, 0 );
 
 	if( p_pData != NULL )
 	{
-		strncpy( p_pData, Recv, 1024 );
+		strncpy( p_pData, pRecv, strlen( pRecv ) );
+		p_pData[ strlen( pRecv ) ] = '\0';
 	}
+	m_Log.Print( "[INFO] <Message from server>:\n%s\n", pRecv );
 
-	m_Log.Print( "[INFO] <Message from server>:\n%s\n", Recv );
+	SAFE_DELETE_ARRAY( pRecv );
 
 	return 0;
 }
@@ -182,8 +221,13 @@ int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
 	}
 	else
 	{
+		// The IP Address and Port are in the format:
+		// a,a,a,a,pa,pb
+		// Where a is a dotted-decimal version of the IP address and pa and pb
+		// are combined to create the port - ( pa*256 ) + pb
 		this->SendCommand( "PASV\r\n" );
 		char RawBuffer[ 1024 ] = { '\0' };
+		memset( RawBuffer, '\0', 1024 );
 		this->ReceiveData( RawBuffer );
 
 		std::string Buffer( RawBuffer );
@@ -238,74 +282,102 @@ int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
 
 int FTPSite::ListCurrentDirectory( std::list< std::string > &p_Results )
 {
-	std::string IPAddr, Port;
-
-	this->StartDataTransfer( &IPAddr, &Port );
-
-	m_Log.Print( "[INFO] Connecting to %s:%s\n",
-		IPAddr.c_str( ), Port.c_str( ) );
-	
-	SOCKET Site;
-
-	if( this->ConnectTo( Site, IPAddr, Port ) != 0 )
+	if( m_ActiveMode )
 	{
-		m_Log.Print( "[ERROR] Could not list directory\n" );
-		return 1;
 	}
-
-	// Get the list
-	this->SendCommand( "NLST\r\n" );
-
-	char Recv[ 1024 ] = { '\0' };
-	memset( Recv, '\0', 1024 );
-	recv( Site, Recv, 1024, 0 );
-
-	// Take the directories, ignore the current and parent directories
-	size_t Items = 0;
-	size_t CharStart = 0, CharEnd = 0;
-	for( size_t i = 0; i < sizeof( Recv ); ++i )
+	else
 	{
-		if( Recv[ i ] == '\n' )
+		std::string IPAddr, Port;
+
+		this->StartDataTransfer( &IPAddr, &Port );
+
+		m_Log.Print( "[INFO] Connecting to %s:%s\n", IPAddr.c_str( ),
+			Port.c_str( ) );
+	
+		SOCKET Site;
+
+		if( this->ConnectTo( Site, IPAddr, Port ) != 0 )
 		{
-			char *pTmpBuff = new char[ ( CharEnd-CharStart )+1 ];
-			strncpy( pTmpBuff, Recv+CharStart, ( CharEnd-CharStart ) );
-			pTmpBuff[ ( CharEnd-CharStart ) ] = '\0';
+			m_Log.Print( "[ERROR] Could not list directory\n" );
+			return 1;
+		}
 
-			// Remove any CRs
-			for( size_t j = 0; j < strlen( pTmpBuff ); ++j )
+		// Get the list
+		this->SendCommand( "NLST" );
+
+		char Recv[ 1024 ] = { '\0' };
+		memset( Recv, '\0', 1024 );
+		recv( Site, Recv, 1024, 0 );
+
+		// Take the directories, ignore the current and parent directories
+		size_t Items = 0;
+		size_t CharStart = 0, CharEnd = 0;
+		for( size_t i = 0; i < sizeof( Recv ); ++i )
+		{
+			if( Recv[ i ] == '\n' )
 			{
-				if( pTmpBuff[ j ] == 0xD )
+				char *pTmpBuff = new char[ ( CharEnd-CharStart )+1 ];
+				strncpy( pTmpBuff, Recv+CharStart, ( CharEnd-CharStart ) );
+				pTmpBuff[ ( CharEnd-CharStart ) ] = '\0';
+
+				// Remove any CRs
+				for( size_t j = 0; j < strlen( pTmpBuff ); ++j )
 				{
-					pTmpBuff[ j ] = '\0';
+					if( pTmpBuff[ j ] == 0xD )
+					{
+						pTmpBuff[ j ] = '\0';
+					}
 				}
-			}
 
-			if( ( strcmp( pTmpBuff, "." ) == 0 ) ||
-				( strcmp( pTmpBuff, ".." ) == 0 ) )
-			{
+				if( ( strcmp( pTmpBuff, "." ) == 0 ) ||
+					( strcmp( pTmpBuff, ".." ) == 0 ) )
+				{
 
-				SAFE_DELETE_ARRAY( pTmpBuff );
+					SAFE_DELETE_ARRAY( pTmpBuff );
+					CharStart = ++CharEnd;
+					continue;
+				}
+				p_Results.push_back( pTmpBuff );
 				CharStart = ++CharEnd;
+				++Items;
+				SAFE_DELETE_ARRAY( pTmpBuff );
 				continue;
 			}
-			p_Results.push_back( pTmpBuff );
-			CharStart = ++CharEnd;
-			++Items;
-			SAFE_DELETE_ARRAY( pTmpBuff );
-			continue;
+			if( Recv[ i ] == '\0' )
+			{
+				break;
+			}
+			++CharEnd;
 		}
-		if( Recv[ i ] == '\0' )
-		{
-			break;
-		}
-		++CharEnd;
+
+		m_Log.Print( "[INFO] <Message from server>:\n%s\n", Recv );
+
+		closesocket( Site );
 	}
 
-	m_Log.Print( "[INFO] <Message from server>:\n%s\n", Recv );
-
-	this->ReceiveData( NULL );
-
-	closesocket( Site );
-
 	return 0;
+}
+
+void FTPSite::SetPort( const char *p_pPort )
+{
+	if( p_pPort == NULL || strlen( p_pPort ) == 0 )
+	{
+		return;
+	}
+
+	m_pPort = new char[ strlen( p_pPort ) + 1 ];
+	strncpy( m_pPort, p_pPort, strlen( p_pPort ) );
+	m_pPort[ strlen( p_pPort ) ] = '\0';
+}
+
+void FTPSite::SetAddress( const char *p_pAddress )
+{
+	if( p_pAddress == NULL || strlen( p_pAddress ) == 0 )
+	{
+		return;
+	}
+
+	m_pServerAddress = new char[ strlen( p_pAddress ) + 1 ];
+	strncpy( m_pServerAddress, p_pAddress, strlen( p_pAddress ) );
+	m_pServerAddress[ strlen( p_pAddress ) ] = '\0';
 }

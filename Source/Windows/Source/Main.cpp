@@ -9,11 +9,15 @@
 #include <CursesHelper.hpp>
 #include <curses.h>
 #include <sstream>
+#include <iostream>
 
 int main( int p_Argc, char **p_ppArgv )
 {
+	// Don't continue if CURSES is fubar
 	if( StartCURSES( ) != 0 )
 	{
+		std::cout << "[ERROR] Could not start PDCURSES" << std::endl <<
+			std::endl;
 		return 1;
 	}
 
@@ -316,7 +320,8 @@ int main( int p_Argc, char **p_ppArgv )
 	wchar_t *pSite = NULL;
 	ConvertCharToWide( Commands.GetSite( ), &pSite );
 	Print( MSG_NORMAL, stdscr, L"Connecting to: %s", pSite );
-	if( Site.Connect( Commands.GetSite( ) ) != 0 )
+	Site.SetAddress( Commands.GetSite( ) );
+	if( Site.Connect( ) != 0 )
 	{
 		Print( MSG_ERROR, stdscr, L"\nFailed to connect to: %ls\n", pSite );
 		SAFE_DELETE_ARRAY( pSite );
@@ -333,17 +338,6 @@ int main( int p_Argc, char **p_ppArgv )
 
 	SAFE_DELETE_ARRAY( pSite );
 
-	Site.ReceiveData( NULL );
-	Site.SendCommand( "USER anonymous\r\n" );
-	Site.ReceiveData( NULL );
-	Site.SendCommand( "PASS anonymous@anyone.com\r\n" );
-	Site.ReceiveData( NULL );
-	Site.SendCommand( "SYST\r\n" );
-	Site.ReceiveData( NULL );
-	Site.SendCommand( "FEAT\r\n" );
-	Site.ReceiveData( NULL );
-	Site.SendCommand( "TYPE I\r\n" );
-	Site.ReceiveData( NULL );
 	std::list< std::string > Directory;
 	Site.ListCurrentDirectory( Directory );
 
@@ -361,8 +355,7 @@ int main( int p_Argc, char **p_ppArgv )
 		}
 	}
 
-	Site.SendCommand( "QUIT\r\n" );
-	Site.ReceiveData( NULL );
+	
 	Site.Disconnect( );
 
 	StopCURSES( );
