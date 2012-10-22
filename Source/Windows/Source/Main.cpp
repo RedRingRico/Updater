@@ -10,7 +10,6 @@
 #include <curses.h>
 #include <sstream>
 
-
 int main( int p_Argc, char **p_ppArgv )
 {
 	if( StartCURSES( ) != 0 )
@@ -119,7 +118,10 @@ int main( int p_Argc, char **p_ppArgv )
 
 	if( Configuration.Parse( ) != 0 )
 	{
-		printw( "Could not find file %s\n", ConfigurationPath );
+		wchar_t *pConfig = NULL;
+		ConvertCharToWide( ConfigurationPath.c_str( ), &pConfig );
+		Print( MSG_WARNING, stdscr, L"Could not find file %ls\n", pConfig );
+		SAFE_DELETE_ARRAY( pConfig );
 		refresh( );
 	}
 	else
