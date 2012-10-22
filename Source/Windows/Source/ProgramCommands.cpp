@@ -1,5 +1,5 @@
 #include <ProgramCommands.hpp>
-#include <iostream>
+#include <curses.h>
 
 namespace Updater
 {
@@ -147,7 +147,7 @@ namespace Updater
 
 	int DisplayUsage( const char **pNULL, ProgramCommands *p_pSelf )
 	{
-		std::cout << "USAGE" << std::endl;
+		printw( "USAGE\n" );
 		return 0;
 	}
 

@@ -1,5 +1,4 @@
 #include <WinSock2.h>
-#include <iostream>
 #include <Log.hpp>
 #include <FTPSite.hpp>
 #include <Version.h>
@@ -9,18 +8,38 @@
 #include <Utility.hpp>
 #include <CursesHelper.hpp>
 #include <curses.h>
+#include <sstream>
 
 
 int main( int p_Argc, char **p_ppArgv )
 {
-	StartCURSES( );
+	if( StartCURSES( ) != 0 )
+	{
+		return 1;
+	}
 
-	printw( "Updater | Version %d.%d.%d.%d%s\n", VERSION_MAJOR, VERSION_MINOR,
-		VERSION_REVISION, VERSION_BUILD, HG_LOCAL_MODIFICATIONS ? "M" : "" );
+	int ScreenSize[ 2 ] = { 0, 0 };
+	getmaxyx( stdscr, ScreenSize[ 1 ], ScreenSize[ 0 ] );
+
+	std::stringstream Title;
+	Title << "Updater Version " << VERSION_MAJOR << "." << VERSION_MINOR <<
+		"." << VERSION_REVISION << "." << VERSION_BUILD <<
+		( HG_LOCAL_MODIFICATIONS ? "M" : "" ) << "\n";
+
+	attron( A_BOLD );
+	attron( COLOR_PAIR( 1 ) );
+	mvprintw( 0, ( ScreenSize[ 0 ] / 2 )-( Title.str( ).size( ) / 2 ), "%s\n",
+		Title.str( ).c_str( ) );
+	attroff( COLOR_PAIR( 1 ) );
+	attroff( A_BOLD );
+	//waddwstr( stdscr, L"TEXT\n" );
+	Print( MSG_NORMAL, stdscr, L"NORMAL TEXT | A number: %d | A string: \" %ls\" | A float: %f\n",
+		10, L"I am painting your face", 8.12f );
+	Print( MSG_INFO, stdscr, L"INFORMATION TEXT\n" );
+	Print( MSG_WARNING, stdscr, L"WARNING TEXT\n" );
+	Print( MSG_ERROR, stdscr, L"ERROR TEXT\n\n" );
 
 	Updater::ProgramCommands Commands;
-	
-	StopCURSES( );
 
 	Commands.Initialise( );
 
@@ -106,7 +125,8 @@ int main( int p_Argc, char **p_ppArgv )
 
 	if( Configuration.Parse( ) != 0 )
 	{
-		std::cout << "Could not find file " << ConfigurationPath << std::endl;
+		printw( "Could not find file %s\n", ConfigurationPath );
+		refresh( );
 	}
 	else
 	{
@@ -253,40 +273,40 @@ int main( int p_Argc, char **p_ppArgv )
 		}
 	}
 
-	std::cout << "Configuration information" << std::endl << std::endl;
-	std::cout << "Server name: " << Commands.GetSite( ) << std::endl;
-	std::cout << "Server port: " << Commands.GetPort( ) << std::endl;
+	printw( "Configuration information\n\n" );
+	printw( "Server name: %s\n", Commands.GetSite( ) );
+	printw( "Server port: %s\n", Commands.GetPort( ) );
+	refresh( );
 	if( Commands.GetActiveMode( ) )
 	{
-		std::cout << "Active mode" << std::endl;
+		printw( "Active mode\n" );
 		int *pPorts = new int[ 2 ];
 		Commands.GetPortRange( &pPorts );
-		std::cout << "\tPort range: " << pPorts[ 0 ] <<
-			":" << pPorts[ 1 ] << std::endl;
+		printw( "\tPort range: %d.%d\n", pPorts[ 0 ], pPorts[ 1 ] );
 		SAFE_DELETE_ARRAY( pPorts );
 	}
 	else
 	{
-		std::cout << "Passive mode" << std::endl;
+		printw( "Passive mode\n" );;
 	}
 	if( strlen( Commands.GetProject( ) ) != 0 )
 	{
-		std::cout << "Project: " << Commands.GetProject( ) << std::endl;
+		printw( "Project: %s\n", Commands.GetProject( ) );
 	}
 	if( strlen( Commands.GetPlatform( ) ) != 0 )
 	{
-		std::cout << "Platform: "<< Commands.GetPlatform( ) << std::endl;
+		printw( "Platform: %s\n", Commands.GetPlatform( ) );
 	}
 	if( strlen( Commands.GetBuildType( ) ) != 0 )
 	{
-		std::cout << "Build Type: " << Commands.GetBuildType( ) << std::endl;
+		printw( "Build Type: %s\n", Commands.GetBuildType( ) );
 	}
 	if( strlen( Commands.GetDownloadSummary( ) ) != 0)
 	{
-		std::cout << "Download Summary File: " << Commands.GetDownloadSummary( )
-			<< std::endl << std::endl;
+		printw( "Download Summary File: %s\n", Commands.GetDownloadSummary( ) );
 	}
-	
+	printw( "\n" );
+	refresh( );
 	/*
 	FTPSite Site;
 
@@ -318,8 +338,8 @@ int main( int p_Argc, char **p_ppArgv )
 	Site.ReceiveData( NULL );
 	Site.Disconnect( );
 */
-	std::cout << "Press any key to exit" << std::endl;
-	getch( );
+
+	StopCURSES( );
 
 	return 0;
 }

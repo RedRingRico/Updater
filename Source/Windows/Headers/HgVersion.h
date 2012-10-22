@@ -1,10 +1,10 @@
 #ifndef __UPDATER_HGVERSION_HPP__
 #define __UPDATER_HGVERSION_HPP__
 
-#define HG_REVISION				24
+#define HG_REVISION				25
 #define HG_LOCAL_MODIFICATIONS	1
-#define HG_CHANGESET			"4ee02c40f191bb2eb39cfab4c4b6028ca1b18648"
-#define HG_CHANGESET_SHORT		"4ee02c40f191"
+#define HG_CHANGESET			"39ce8a42fc63e75bbf27e7c55247486eddc4dce5"
+#define HG_CHANGESET_SHORT		"39ce8a42fc63"
 
 #endif
 
