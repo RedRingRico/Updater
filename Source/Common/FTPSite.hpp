@@ -6,6 +6,7 @@
 #endif
 
 #include <Log.hpp>
+#include <list>
 
 class FTPSite
 {
@@ -14,7 +15,7 @@ public:
 	~FTPSite( );
 
 	// Use passive or active mode
-	int Initialise( const bool p_Passive = true );
+	int Initialise( const bool p_ActiveMode = false );
 
 	// Connect using a domain name or IP address
 	int Connect( const char *p_pAddress );
@@ -26,7 +27,7 @@ public:
 
 	// Begin a file request and return the IP address and port to use
 	int StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort );
-	int ListCurrentDirectory( std::string *p_pResults );
+	int ListCurrentDirectory( std::list< std::string > &p_Results );
 
 private:
 	void *GetINetAddress( const struct sockaddr *p_pAddress );
@@ -40,7 +41,7 @@ private:
 
 	char *m_pServerAddress;
 	bool m_IPv6;
-	bool m_Passive;
+	bool m_ActiveMode;
 
 	Log m_Log;
 };
