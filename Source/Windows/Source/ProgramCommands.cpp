@@ -93,6 +93,21 @@ namespace Updater
 		return 0;
 	}
 
+	int ProgramCommands::ValidCommand( const std::string &p_Command )
+	{
+		ClassCmdItr Itr = m_ClassCommands.begin( );
+		for( ; Itr != m_ClassCommands.end( ); ++Itr )
+		{
+			if( ( ( *Itr ).CommandName.compare( p_Command ) == 0 ) ||
+				( ( *Itr ).FunctionName.compare( p_Command ) == 0 ) ||
+				( ( *Itr ).ShortCmdName.compare( p_Command ) == 0 ) )
+			{
+				return 0;
+			}
+		}
+		return Updater::Command::ValidCommand( p_Command );
+	}
+
 	int ProgramCommands::Execute( const char *p_pCommandName,
 		const char **p_pParameters )
 	{

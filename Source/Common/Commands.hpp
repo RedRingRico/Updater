@@ -3,27 +3,6 @@
 
 #include <list>
 
-// Integer values of command-line arguments
-const int INVALID_COMMAND			= 0xFFFFFFFF;
-
-enum
-{
-	COMMAND_CONFIG_FILE = 0,
-	COMMAND_SITE,
-	COMMAND_PORT,
-	COMMAND_PROJECT,
-	COMMAND_PLATFORM,
-	COMMAND_BUILD_TYPE,
-	COMMAND_DOWNLOAD_SUMMARY,
-	COMMAND_ACTIVE_MODE,
-	COMMAND_PORT_RANGE,
-	COMMAND_USAGE,
-	MAX_COMMANDS
-};
-
-// Returns the integer value from the command line
-int GetCommandLineParameter( const char *p_pArg, char **p_ppParameter );
-
 typedef int ( *COMMAND_FUNCTION )( const char **p_pParameters );
 
 typedef enum __PARAM_TYPE
@@ -67,6 +46,9 @@ namespace Updater
 		virtual void GetCommandParamCount( std::string p_Command,
 			int *p_pCount );
 		virtual void GetCommandList( std::list< std::string > &p_Commands );
+
+		// Is the user querying a valid command?
+		virtual int ValidCommand( const std::string &p_Command );
 
 		virtual int Execute( const char *p_pCommandName,
 			const char **p_pParameters );

@@ -3,88 +3,6 @@
 #include <string>
 #include <cstring>
 
-// This may be a terrible idea
-const char *g_pCommands[ 30 ] =
-{
-	// Long name				Short name	Command Name
-	"config-file",				"f",		"ConfigFile",
-	"site",						"s",		"Site",
-	"port",						"p",		"Port",
-	"project",					"r",		"Project",
-	"platform",					"m",		"Platform",
-	"build-type",				"t",		"BuildType",
-	"output-download-summary",	"o",		"DownloadSummary",
-	"active-mode",				"a",		"ActiveMode",
-	"port-range",				"n",		"PortRange",
-	"usage",					"u",		"Usage"
-};
-
-int GetCommandLineParameter( const char *p_pArg, char **p_ppParameter )
-{
-	if( p_pArg == NULL || strlen( p_pArg ) == 0 )
-	{
-		return 1;
-	}
-
-	if( strlen( p_pArg ) < 2 )
-	{
-		return 1;
-	}
-	const char pTacks[ 3 ] = { p_pArg[ 0 ], p_pArg[ 1 ], '\0' };
-	const char pTack[ 2 ] = { p_pArg[ 0 ], '\0' };
-	// Parameters must begin with a hypen or double-hyphen
-	if( strcmp( pTacks, "--" ) == 0 )
-	{
-		if( strlen( p_pArg ) <= 2 )
-		{
-			return 1;
-		}
-		char *pParameter = new char[ strlen( p_pArg )-1 ];
-		if( pParameter == NULL )
-		{
-			return 1;
-		}
-		strncpy( pParameter, p_pArg+2, strlen( p_pArg )-2 );
-		pParameter[ strlen( p_pArg )-2 ] = '\0';
-
-		size_t Command = MAX_COMMANDS+1;
-
-		for( size_t i = 0; i < MAX_COMMANDS; ++i )
-		{
-			if( strcmp( pParameter, g_pCommands[ ( i*3 ) ] ) == 0 )
-			{
-				Command = i;
-				break;
-			}
-		}
-		if( Command == MAX_COMMANDS+1 )
-		{
-			delete [ ] pParameter;
-			pParameter = NULL;
-			return INVALID_COMMAND;
-		}
-
-		size_t CommandLen = strlen( g_pCommands[ ( Command*3 )+2 ] );
-		( *p_ppParameter ) = new char[ CommandLen+1 ];
-		strncpy( ( *p_ppParameter ),g_pCommands[ ( Command*3 )+2 ], CommandLen );
-		( *p_ppParameter )[ CommandLen ] = '\0';
-
-		delete [ ] pParameter;
-		pParameter = NULL;
-
-		return Command;
-	}
-	else if( strcmp( &pTacks[ 0 ], "-" ) == 0 )
-	{
-	}
-	else
-	{
-		return INVALID_COMMAND;
-	}
-
-	return INVALID_COMMAND;
-}
-
 int GetConfigFile( const char *p_pArg, char **p_pConfigFile )
 {
 	if( p_pArg == NULL )
@@ -193,6 +111,22 @@ namespace Updater
 		{
 			p_Commands.push_front( ( *Itr ).FunctionName );
 		}
+	}
+
+	int Command::ValidCommand( const std::string &p_Command )
+	{
+		CommandItr Itr = m_Commands.begin( );
+
+		for( ; Itr != m_Commands.end( ); ++Itr )
+		{
+			if( ( ( *Itr ).CommandName.compare( p_Command ) == 0 ) ||
+				( ( *Itr ).FunctionName.compare( p_Command ) == 0 ) ||
+				( ( *Itr ).ShortCmdName.compare( p_Command ) == 0 ) )
+			{
+				return 0;
+			}
+		}
+		return 1;
 	}
 
 	int Command::Execute( const char *p_pCommandName,

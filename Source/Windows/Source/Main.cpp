@@ -219,10 +219,9 @@ int main( int p_Argc, char **p_ppArgv )
 		for( size_t i = 1; i < p_Argc; ++i )
 		{
 			std::string Arg = p_ppArgv[ i ];
-			char *pCommand = NULL;
+			//char *pCommand = NULL;
 			// Is this a valid command line parameter?
-			if( GetCommandLineParameter( Arg.c_str( ), &pCommand )
-				!= INVALID_COMMAND )
+			if( Commands.ValidCommand( Arg ) == 0 )
 			{
 				int ParamCount = 0;
 				Commands.GetCommandParamCount( Arg.c_str( ), &ParamCount );
@@ -258,7 +257,7 @@ int main( int p_Argc, char **p_ppArgv )
 					ParamCount = 0;
 				}
 
-				Commands.Execute( pCommand,
+				Commands.Execute( Arg.c_str( ), 
 					const_cast< const char ** >( ppParams ) );
 
 				for( size_t j = 0; j < ParamCount; ++j )

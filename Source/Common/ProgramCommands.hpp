@@ -40,6 +40,8 @@ namespace Updater
 			int *p_pCount );
 		virtual void GetCommandList( std::list< std::string > &p_Commands );
 
+		virtual int ValidCommand( const std::string &p_Command );
+
 		virtual int Execute( const char *p_pCommandName,
 			const char **p_pParameters );
 
