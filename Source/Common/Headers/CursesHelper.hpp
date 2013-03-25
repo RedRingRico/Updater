@@ -17,8 +17,9 @@ int StartCURSES( const bool p_Raw = true, const bool p_Echo = false,
 int StopCURSES( const bool p_Wait = true, const bool p_PrintMessage = true );
 
 void Print( const MESSAGE_TYPE p_Message, WINDOW *p_pWindow,
-	const wchar_t *p_pMessage, ... );
-void MVPrint( const int p_Column, const int p_Row, const MESSAGE_TYPE p_Message,
-	WINDOW *p_pWindow, const wchar_t *p_pMessage, ... );
+	const char *p_pMessage, ... );
+void MVPrint( const int p_Column, const int p_Row,
+	const MESSAGE_TYPE p_Message,
+	WINDOW *p_pWindow, const char *p_pMessage, ... );
 
 #endif

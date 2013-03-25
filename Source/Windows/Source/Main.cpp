@@ -26,9 +26,8 @@ int main( int p_Argc, char **p_ppArgv )
 
 	std::stringstream Title;
 	Title << "Updater Version " << VERSION_MAJOR << "." << VERSION_MINOR <<
-		"." << VERSION_REVISION << "." << VERSION_BUILD <<
-		( HG_LOCAL_MODIFICATIONS ? "M" : "" ) << "\n";
-
+		"." << VERSION_REVISION << "." << VERSION_BUILD << "\n";
+		
 	attron( A_BOLD );
 	attron( COLOR_PAIR( 1 ) );
 	mvprintw( 0, ( ScreenSize[ 0 ] / 2 )-( Title.str( ).size( ) / 2 ), "%s\n",
@@ -122,10 +121,8 @@ int main( int p_Argc, char **p_ppArgv )
 
 	if( Configuration.Parse( ) != 0 )
 	{
-		wchar_t *pConfig = NULL;
-		ConvertCharToWide( ConfigurationPath.c_str( ), &pConfig );
-		Print( MSG_WARNING, stdscr, L"Could not find file %ls\n", pConfig );
-		SAFE_DELETE_ARRAY( pConfig );
+		Print( MSG_WARNING, stdscr, "Could not find file %s\n",
+			ConfigurationPath.c_str( ) );
 		refresh( );
 	}
 	else
@@ -302,7 +299,8 @@ int main( int p_Argc, char **p_ppArgv )
 	}
 	if( strlen( Commands.GetDownloadSummary( ) ) != 0)
 	{
-		printw( "Download Summary File: %s\n", Commands.GetDownloadSummary( ) );
+		printw( "Download Summary File: %s\n",
+			Commands.GetDownloadSummary( ) );
 	}
 	printw( "\n" );
 	refresh( );
@@ -312,18 +310,17 @@ int main( int p_Argc, char **p_ppArgv )
 	if( Site.Initialise( Commands.GetActiveMode( ) ) != 0 )
 	{
 		Print( MSG_ERROR, stdscr,
-			L"Failed to initilaise FTP server settings\n" );
+			"Failed to initilaise FTP server settings\n" );
 		StopCURSES( );
 		return 1;
 	}
-	wchar_t *pSite = NULL;
-	ConvertCharToWide( Commands.GetSite( ), &pSite );
-	Print( MSG_NORMAL, stdscr, L"Connecting to: %s", pSite );
+
+	Print( MSG_NORMAL, stdscr, "Connecting to: %s", Commands.GetSite( ) );
 	Site.SetAddress( Commands.GetSite( ) );
 	if( Site.Connect( ) != 0 )
 	{
-		Print( MSG_ERROR, stdscr, L"\nFailed to connect to: %ls\n", pSite );
-		SAFE_DELETE_ARRAY( pSite );
+		Print( MSG_ERROR, stdscr, "\nFailed to connect to: %s\n",
+			Commands.GetSite( ) );
 
 		StopCURSES( );
 		return 1;
@@ -333,9 +330,7 @@ int main( int p_Argc, char **p_ppArgv )
 	int CurX = 0;
 	getyx( stdscr, CurY, CurX );
 	MVPrint( CurY, ScreenSize[ 0 ]-strlen( "[OK]" ), MSG_INFO,
-		stdscr, L"[OK]" );
-
-	SAFE_DELETE_ARRAY( pSite );
+		stdscr, "[OK]" );
 
 	std::list< std::string > Directory;
 	Site.ListCurrentDirectory( Directory );
@@ -343,14 +338,11 @@ int main( int p_Argc, char **p_ppArgv )
 	if( Directory.size( ) > 0 )
 	{
 		std::list< std::string >::iterator Itr = Directory.begin( );
-		Print( MSG_NORMAL, stdscr, L"Directory contents\n" );
+		Print( MSG_NORMAL, stdscr, "Directory contents\n" );
 
 		for( ; Itr != Directory.end( ); ++Itr )
 		{
-			wchar_t *pDir = NULL;
-			ConvertCharToWide( ( *Itr ).c_str( ), &pDir );
-			Print( MSG_NORMAL, stdscr, L"\t>%ls\n", pDir );
-			SAFE_DELETE_ARRAY( pDir );
+			Print( MSG_NORMAL, stdscr, "\t>%s\n", ( *Itr ).c_str( ) );
 		}
 	}
 

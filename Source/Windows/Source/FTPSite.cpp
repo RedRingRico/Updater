@@ -1,7 +1,29 @@
 #undef UNICODE
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
 #include <FTPSite.hpp>
 #include <ws2tcpip.h>
 #include <Utility.hpp>
+
+// Credit for inet_ntop2
+// http://memset.wordpress.com/2010/10/09/inet_ntop-for-win32
+const char* inet_ntop2( int af, const void* src, char* dst, int cnt )
+{
+    struct sockaddr_in srcaddr;
+ 
+    memset( &srcaddr, 0, sizeof( struct sockaddr_in ) );
+    memcpy( &( srcaddr.sin_addr ), src, sizeof( srcaddr.sin_addr ) );
+ 
+    srcaddr.sin_family = af;
+    if( WSAAddressToString( (struct sockaddr* ) &srcaddr,
+	 sizeof(struct sockaddr_in), 0, dst, ( LPDWORD )&cnt ) != 0 )
+	{
+        DWORD rv = WSAGetLastError( );
+        printf( "WSAAddressToString( ) : %d\n", rv );
+        return NULL;
+    }
+    return dst;
+}
 
 FTPSite::FTPSite( )
 {
@@ -93,7 +115,7 @@ int FTPSite::ConnectTo( SOCKET &p_Socket, const std::string p_IPAddr,
 
 	char ServerStr[ INET6_ADDRSTRLEN ];
 
-	inet_ntop( pBest->ai_family,
+	inet_ntop2( pBest->ai_family,
 		this->GetINetAddress( ( struct sockaddr * )pBest->ai_addr ),
 		ServerStr, sizeof( ServerStr ) );
 
@@ -381,3 +403,4 @@ void FTPSite::SetAddress( const char *p_pAddress )
 	strncpy( m_pServerAddress, p_pAddress, strlen( p_pAddress ) );
 	m_pServerAddress[ strlen( p_pAddress ) ] = '\0';
 }
+

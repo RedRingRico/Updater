@@ -1,165 +1,10 @@
 #include <ProgramCommands.hpp>
+#include <cstring>
+#include <cstdlib>
 #include <curses.h>
-
+#include <windows.h>
 namespace Updater
 {
-	ProgramCommands::ProgramCommands( )
-	{
-	}
-
-	ProgramCommands::~ProgramCommands( )
-	{
-	}
-
-	int ProgramCommands::Add( const std::string &p_FunctionName,
-			const std::string &p_CommandName, const std::string &p_ShortCmdName,
-			const CLASS_COMMAND_FUNCTION p_Function,
-			const size_t p_ParamCount, const PARAM_TYPE *p_pParamList,
-			ProgramCommands *p_pSelf )
-	{
-		// Make sure the function isn't already defined
-		std::list< COMMAND >::iterator CmdItr = m_Commands.begin( );
-
-		for( ; CmdItr != m_Commands.end( ); ++CmdItr )
-		{
-			if( ( *CmdItr ).FunctionName.compare( p_FunctionName ) == 0 )
-			{
-				return 1;
-			}
-			if( ( *CmdItr ).CommandName.compare( p_CommandName ) == 0 )
-			{
-				return 1;
-			}
-			if( ( *CmdItr ).ShortCmdName.compare( p_ShortCmdName ) == 0 )
-			{
-				return 1;
-			}
-		}
-
-		CLASS_COMMAND TmpCmd;
-		memset( &TmpCmd, 0, sizeof( COMMAND ) );
-
-		TmpCmd.Function = p_Function;
-		TmpCmd.ParamCount = p_ParamCount;
-		TmpCmd.pParams = const_cast< PARAM_TYPE* >( p_pParamList );
-		TmpCmd.FunctionName = p_FunctionName;
-		TmpCmd.CommandName = p_CommandName;
-		TmpCmd.ShortCmdName = p_ShortCmdName;
-
-		m_ClassCommands.push_back( TmpCmd ); 
-		return 0;
-	}
-
-	int ProgramCommands::Initialise( )
-	{
-		PARAM_TYPE OneString = PARAM_STRING;
-		PARAM_TYPE OneInt = PARAM_INTEGER;
-
-		m_ConfigurationFile.clear( );
-		m_Site.clear( );
-		m_Port.clear( );
-		m_Project.clear( );
-		m_Platform.clear( );
-		m_BuildType.clear( );
-		m_DownloadSummary.clear( );
-
-		m_Site.append( "opengamedevelopers.org" );
-		m_Port.append( "21" );
-		m_ConfigurationFile.append( "default.cfg" );
-
-		m_PortRange.Port[ 0 ] = 40000;
-		m_PortRange.Port[ 1 ] = 40010;
-
-		m_ActiveMode = false;
-
-		this->Add( "Usage", "--usage", "-u", DisplayUsage, 0, NULL, this );
-		this->Add( "ConfigurationFile", "--config-file", "-f",
-			SetConfigurationFile, 1, &OneString, this );
-		this->Add( "Site", "--site", "-s", SetSite, 1, &OneString, this );
-		this->Add( "Port", "--port", "-p", SetPort, 1, &OneString, this );
-		this->Add( "ActiveMode", "--active-mode", "-a", SetActiveMode, 0, 0,
-			this );
-		this->Add( "PortRange", "--port-range", "-n",  SetPortRange, 1, &OneInt,
-			this );
-		this->Add( "Project", "--project", "-r", SetProject, 1, &OneString,
-			this );
-		this->Add( "Platform", "--platform", "-m", SetPlatform, 1, &OneString,
-			this );
-		this->Add( "BuildType", "--build-type", "-t", SetBuildType, 1, &OneString,
-			this);
-		this->Add( "DownloadSummary", "--output-download-summary", "-o",
-			SetDownloadSummary, 1, &OneString, this );
-
-		return 0;
-	}
-
-	int ProgramCommands::ValidCommand( const std::string &p_Command )
-	{
-		ClassCmdItr Itr = m_ClassCommands.begin( );
-		for( ; Itr != m_ClassCommands.end( ); ++Itr )
-		{
-			if( ( ( *Itr ).CommandName.compare( p_Command ) == 0 ) ||
-				( ( *Itr ).FunctionName.compare( p_Command ) == 0 ) ||
-				( ( *Itr ).ShortCmdName.compare( p_Command ) == 0 ) )
-			{
-				return 0;
-			}
-		}
-		return Updater::Command::ValidCommand( p_Command );
-	}
-
-	int ProgramCommands::Execute( const char *p_pCommandName,
-		const char **p_pParameters )
-	{
-		std::list< CLASS_COMMAND >::iterator Itr = m_ClassCommands.begin( );
-		for( ; Itr != m_ClassCommands.end( ); ++Itr )
-		{
-			if( ( ( *Itr ).FunctionName.compare( p_pCommandName ) == 0 ) ||
-				( ( *Itr ).CommandName.compare( p_pCommandName ) == 0 ) ||
-				( ( *Itr ).ShortCmdName.compare( p_pCommandName ) == 0 ) )
-			{
-				int Result = 
-					( *Itr ).Function( p_pParameters, this );
-				return Result;
-			}
-		}
-
-		return Updater::Command::Execute( p_pCommandName, p_pParameters );
-
-		return 1;
-	}
-
-	void ProgramCommands::GetCommandParamCount( std::string p_Command,
-		int *p_pCount )
-	{
-		ClassCmdItr Itr = m_ClassCommands.begin( );
-
-		for( ; Itr != m_ClassCommands.end( ); ++Itr )
-		{
-			if( ( *Itr ).FunctionName.compare( p_Command ) == 0 )
-			{
-				*p_pCount = ( *Itr ).ParamCount;
-				return;
-			}
-			if( ( *Itr ).CommandName.compare( p_Command ) == 0 )
-			{
-				*p_pCount = ( *Itr ).ParamCount;
-				return;
-			}
-			if( ( *Itr ).ShortCmdName.compare( p_Command ) == 0 )
-			{
-				*p_pCount = ( *Itr ).ParamCount;
-				return;
-			}
-		}
-
-		Updater::Command::GetCommandParamCount( p_Command, p_pCount );
-	}
-
-	void ProgramCommands::GetCommandList( std::list< std::string > &p_Commands )
-	{
-	}
-
 	int DisplayUsage( const char **pNULL, ProgramCommands *p_pSelf )
 	{
 		printw( "USAGE\n" );
@@ -193,7 +38,7 @@ namespace Updater
 		return 0;
 	}
 
-	int SetPort( const char **p_pPort, ProgramCommands *p_pSelf )
+	int SetPortP( const char **p_pPort, ProgramCommands *p_pSelf )
 	{
 		if( p_pPort == NULL || strlen( ( *p_pPort ) ) == 0 )
 		{
@@ -294,7 +139,8 @@ namespace Updater
 	int SetDownloadSummary( const char **p_pDownloadSummary,
 		ProgramCommands *p_pSelf )
 	{
-		if( p_pDownloadSummary == NULL || strlen( ( *p_pDownloadSummary ) ) == 0 )
+		if( ( p_pDownloadSummary == NULL ) ||
+			( strlen( ( *p_pDownloadSummary ) ) == 0 ) )
 		{
 			return 1;
 		}
@@ -304,4 +150,166 @@ namespace Updater
 
 		return 0;
 	}
+
+	ProgramCommands::ProgramCommands( )
+	{
+		m_ClassCommands.empty( );
+	}
+
+	ProgramCommands::~ProgramCommands( )
+	{
+	}
+
+	int ProgramCommands::Add( const std::string &p_FunctionName,
+		const std::string &p_CommandName, const std::string &p_ShortCmdName,
+		const CLASS_COMMAND_FUNCTION p_Function,
+		const size_t p_ParamCount, const PARAM_TYPE *p_pParamList,
+		ProgramCommands *p_pSelf )
+	{
+		// Make sure the function isn't already defined
+		std::list< COMMAND >::iterator CmdItr = m_Commands.begin( );
+
+
+		for( ; CmdItr != m_Commands.end( ); ++CmdItr )
+		{
+			if( ( *CmdItr ).FunctionName.compare( p_FunctionName ) == 0 )
+			{
+				return 1;
+			}
+			if( ( *CmdItr ).CommandName.compare( p_CommandName ) == 0 )
+			{
+				return 1;
+			}
+			if( ( *CmdItr ).ShortCmdName.compare( p_ShortCmdName ) == 0 )
+			{
+				return 1;
+			}
+		}
+
+		CLASS_COMMAND TmpCmd;
+	//	memset( &TmpCmd, 0, sizeof( COMMAND ) );
+
+		TmpCmd.Function = p_Function;
+		TmpCmd.ParamCount = p_ParamCount;
+		TmpCmd.pParams = const_cast< PARAM_TYPE* >( p_pParamList );
+		TmpCmd.FunctionName = p_FunctionName;
+		TmpCmd.CommandName = p_CommandName;
+		TmpCmd.ShortCmdName = p_ShortCmdName;
+
+		m_ClassCommands.push_back( TmpCmd ); 
+		return 0;
+	}
+
+	int ProgramCommands::Initialise( )
+	{
+		PARAM_TYPE OneString = PARAM_STRING;
+		PARAM_TYPE OneInt = PARAM_INTEGER;
+
+		m_ConfigurationFile.clear( );
+		m_Site.clear( );
+		m_Port.clear( );
+		m_Project.clear( );
+		m_Platform.clear( );
+		m_BuildType.clear( );
+		m_DownloadSummary.clear( );
+
+		m_Site.append( "opengamedevelopers.org" );
+		m_Port.append( "21" );
+		m_ConfigurationFile.append( "default.cfg" );
+
+		m_PortRange.Port[ 0 ] = 40000;
+		m_PortRange.Port[ 1 ] = 40010;
+
+		m_ActiveMode = false;
+
+		this->Add( "Usage", "--usage", "-u", DisplayUsage, 0, NULL, this );
+		this->Add( "ConfigurationFile", "--config-file", "-f",
+			SetConfigurationFile, 1, &OneString, this );
+		this->Add( "Site", "--site", "-s", SetSite, 1, &OneString, this );
+		this->Add( "Port", "--port", "-p", SetPortP, 1, &OneString, this );
+		this->Add( "ActiveMode", "--active-mode", "-a", SetActiveMode, 0, 0,
+			this );
+		this->Add( "PortRange", "--port-range", "-n",  SetPortRange, 1,
+			&OneInt, this );
+		this->Add( "Project", "--project", "-r", SetProject, 1, &OneString,
+			this );
+		this->Add( "Platform", "--platform", "-m", SetPlatform, 1, &OneString,
+			this );
+		this->Add( "BuildType", "--build-type", "-t", SetBuildType, 1,
+			&OneString, this );
+		this->Add( "DownloadSummary", "--output-download-summary", "-o",
+			SetDownloadSummary, 1, &OneString, this );
+
+		return 0;
+	}
+
+	int ProgramCommands::ValidCommand( const std::string &p_Command )
+	{
+		ClassCmdItr Itr = m_ClassCommands.begin( );
+		for( ; Itr != m_ClassCommands.end( ); ++Itr )
+		{
+			if( ( ( *Itr ).CommandName.compare( p_Command ) == 0 ) ||
+				( ( *Itr ).FunctionName.compare( p_Command ) == 0 ) ||
+				( ( *Itr ).ShortCmdName.compare( p_Command ) == 0 ) )
+			{
+				return 0;
+			}
+		}
+		return Updater::Command::ValidCommand( p_Command );
+	}
+
+	int ProgramCommands::Execute( const char *p_pCommandName,
+		const char **p_pParameters )
+	{
+		std::list< CLASS_COMMAND >::iterator Itr = m_ClassCommands.begin( );
+		for( ; Itr != m_ClassCommands.end( ); ++Itr )
+		{
+			if( ( ( *Itr ).FunctionName.compare( p_pCommandName ) == 0 ) ||
+				( ( *Itr ).CommandName.compare( p_pCommandName ) == 0 ) ||
+				( ( *Itr ).ShortCmdName.compare( p_pCommandName ) == 0 ) )
+			{
+				int Result = 
+					( *Itr ).Function( p_pParameters, this );
+				return Result;
+			}
+		}
+
+		return Updater::Command::Execute( p_pCommandName, p_pParameters );
+
+		return 1;
+	}
+
+	void ProgramCommands::GetCommandParamCount( std::string p_Command,
+		int *p_pCount )
+	{
+		ClassCmdItr Itr = m_ClassCommands.begin( );
+
+		for( ; Itr != m_ClassCommands.end( ); ++Itr )
+		{
+			if( ( *Itr ).FunctionName.compare( p_Command ) == 0 )
+			{
+				*p_pCount = ( *Itr ).ParamCount;
+				return;
+			}
+			if( ( *Itr ).CommandName.compare( p_Command ) == 0 )
+			{
+				*p_pCount = ( *Itr ).ParamCount;
+				return;
+			}
+			if( ( *Itr ).ShortCmdName.compare( p_Command ) == 0 )
+			{
+				*p_pCount = ( *Itr ).ParamCount;
+				return;
+			}
+		}
+
+		Updater::Command::GetCommandParamCount( p_Command, p_pCount );
+	}
+
+	void ProgramCommands::GetCommandList(
+		std::list< std::string > &p_Commands )
+	{
+	}
+
+
 }

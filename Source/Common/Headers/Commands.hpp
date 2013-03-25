@@ -1,6 +1,7 @@
 #ifndef __UPDATER_COMMANDS_HPP__
 #define __UPDATER_COMMANDS_HPP__
 
+#include <string>
 #include <list>
 
 typedef int ( *COMMAND_FUNCTION )( const char **p_pParameters );

@@ -4,7 +4,8 @@
 
 static bool CursesInit = false;
 
-int StartCURSES( const bool p_Raw, const bool p_Echo, const bool p_FunctionKeys )
+int StartCURSES( const bool p_Raw, const bool p_Echo,
+	const bool p_FunctionKeys )
 {
 	if( CursesInit )
 	{
@@ -73,33 +74,33 @@ int StopCURSES( const bool p_Wait, const bool p_PrintMessage )
 }
 
 void Print( const MESSAGE_TYPE p_Message, WINDOW *p_pWindow,
-	const wchar_t *p_pMessage, ... )
+	const char *p_pMessage, ... )
 {
 	if( p_Message < MSG_NORMAL || p_Message > MSG_MAX )
 	{
 		if( p_pWindow )
 		{
 			attron( COLOR_PAIR( 4 ) );
-			waddwstr( p_pWindow, L"Error.  Message type not recognised\n" );
+			waddstr( p_pWindow, "Error.  Message type not recognised\n" );
 			attroff( COLOR_PAIR( 4 ) );
 		}
 		else
 		{
-			waddwstr( stdscr, L"Error.  Message type not recognised\n" );
+			waddstr( stdscr, "Error.  Message type not recognised\n" );
 		}
 		return;
 	}
 
 	if( p_pWindow )
 	{
-		wchar_t *pCompleteMessage;
+		char *pCompleteMessage;
 		int RetVal;
 
 		va_list ArgPtr;
 		va_start( ArgPtr, p_pMessage );
-		int StrLen = vwprintf( p_pMessage, ArgPtr ) + 1;
-		pCompleteMessage = new wchar_t[ StrLen ];
-		RetVal = vswprintf_s( pCompleteMessage, StrLen, p_pMessage, ArgPtr );
+		int StrLen = vprintf( p_pMessage, ArgPtr ) + 1;
+		pCompleteMessage = new char[ StrLen ];
+		RetVal = vsnprintf( pCompleteMessage, StrLen, p_pMessage, ArgPtr );
 		va_end( ArgPtr );
 		
 		switch( p_Message )
@@ -107,28 +108,28 @@ void Print( const MESSAGE_TYPE p_Message, WINDOW *p_pWindow,
 		case MSG_NORMAL:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 4 ) );
-				waddwstr( p_pWindow, pCompleteMessage );
+				waddstr( p_pWindow, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 4 ) );
 				break;
 			}
 		case MSG_INFO:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 3 ) );
-				waddwstr( p_pWindow, pCompleteMessage );
+				waddstr( p_pWindow, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 3 ) );
 				break;
 			}
 		case MSG_WARNING:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 2 ) );
-				waddwstr( p_pWindow, pCompleteMessage );
+				waddstr( p_pWindow, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 2 ) );
 				break;
 			}
 		case MSG_ERROR:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 1 ) );
-				waddwstr( p_pWindow, pCompleteMessage );
+				waddstr( p_pWindow, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 1 ) );
 				break;
 			}
@@ -142,46 +143,47 @@ void Print( const MESSAGE_TYPE p_Message, WINDOW *p_pWindow,
 	}
 }
 
-void MVPrint( const int p_Column, const int p_Row, const MESSAGE_TYPE p_Message,
-	WINDOW *p_pWindow, const wchar_t *p_pMessage, ... )
+void MVPrint( const int p_Column, const int p_Row,
+	const MESSAGE_TYPE p_Message,
+	WINDOW *p_pWindow, const char *p_pMessage, ... )
 {
 	if( p_Message < MSG_NORMAL || p_Message > MSG_MAX )
 	{
 		if( p_pWindow )
 		{
 			attron( COLOR_PAIR( 4 ) );
-			waddwstr( p_pWindow, L"Error.  Message type not recognised\n" );
+			waddstr( p_pWindow, "Error.  Message type not recognised\n" );
 			attroff( COLOR_PAIR( 4 ) );
 		}
 		else
 		{
-			waddwstr( stdscr, L"Error.  Message type not recognised\n" );
+			waddstr( stdscr, "Error.  Message type not recognised\n" );
 		}
 		return;
 	}
 
 	if( p_pWindow )
 	{
-		wchar_t *pCompleteMessage;
+		char *pCompleteMessage;
 		// HACK!
 		// For some reason, PDCURSES is printing the string as if the cursor
 		// were not moved at all, so these blank characters will need to be
 		// inserted
 		// !HACK
-		wchar_t *pBlankStr;
+		char *pBlankStr;
 		int RetVal;
 
 		va_list ArgPtr;
 		va_start( ArgPtr, p_pMessage );
-		int StrLen = vwprintf( p_pMessage, ArgPtr ) + 1;
-		pCompleteMessage = new wchar_t[ StrLen ];
-		pBlankStr = new wchar_t[ StrLen+1 ];
+		int StrLen = vprintf( p_pMessage, ArgPtr ) + 1;
+		pCompleteMessage = new char[ StrLen ];
+		pBlankStr = new char[ StrLen+1 ];
 		for( size_t i = 0; i < StrLen; ++i )
 		{
-			pBlankStr[ i ] = L' ';
+			pBlankStr[ i ] = ' ';
 		}
 		pBlankStr[ StrLen ] = '\0';
-		RetVal = vswprintf_s( pCompleteMessage, StrLen, p_pMessage, ArgPtr );
+		RetVal = vsnprintf( pCompleteMessage, StrLen, p_pMessage, ArgPtr );
 		va_end( ArgPtr );
 		
 		switch( p_Message )
@@ -189,29 +191,29 @@ void MVPrint( const int p_Column, const int p_Row, const MESSAGE_TYPE p_Message,
 		case MSG_NORMAL:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 4 ) );
-				mvwaddwstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
+				mvwaddstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 4 ) );
 				break;
 			}
 		case MSG_INFO:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 3 ) );
-				waddwstr( p_pWindow, pBlankStr );
-				mvwaddwstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
+				waddstr( p_pWindow, pBlankStr );
+				mvwaddstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 3 ) );
 				break;
 			}
 		case MSG_WARNING:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 2 ) );
-				mvwaddwstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
+				mvwaddstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 2 ) );
 				break;
 			}
 		case MSG_ERROR:
 			{
 				wattron( p_pWindow, COLOR_PAIR( 1 ) );
-				mvwaddwstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
+				mvwaddstr( p_pWindow, p_Column, p_Row, pCompleteMessage );
 				wattroff( p_pWindow, COLOR_PAIR( 1 ) );
 				break;
 			}
@@ -225,3 +227,4 @@ void MVPrint( const int p_Column, const int p_Row, const MESSAGE_TYPE p_Message,
 		SAFE_DELETE_ARRAY( pCompleteMessage );
 	}
 }
+

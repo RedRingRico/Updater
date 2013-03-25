@@ -15,7 +15,7 @@ namespace Updater
 	{
 		typedef int ( *CLASS_COMMAND_FUNCTION )( const char **p_pParameters,
 			ProgramCommands *p_pSelf );
-			typedef struct __CLASS_COMMAND
+		typedef struct __CLASS_COMMAND
 		{
 			// The function name to call the function by
 			std::string			FunctionName;
@@ -72,7 +72,7 @@ namespace Updater
 		friend int SetConfigurationFile( const char **p_pFileName,
 			ProgramCommands *p_pSelf );
 		friend int SetSite( const char **p_pSite, ProgramCommands *p_pSelf );
-		friend int SetPort( const char **p_pPort, ProgramCommands *p_pSelf );
+		friend int SetPortP( const char **p_pPort, ProgramCommands *p_pSelf );
 		friend int SetActiveMode( const char **p_ppMode,
 			ProgramCommands *p_pSelf );
 		friend int SetPortRange( const char **p_pPortRange,
@@ -104,3 +104,4 @@ namespace Updater
 }
 
 #endif
+
