@@ -1,7 +1,9 @@
 #ifndef __UPDATER_CONFIGFILE_HPP__
 #define __UPDATER_CONFIGFILE_HPP__
 
+#ifdef PLATFORM_WINDOWS
 #include <Windows.h>
+#endif
 #include <string>
 #include <map>
 
@@ -28,6 +30,7 @@ private:
 
 #ifdef PLATFORM_LINUX
 	FILE *m_pFile;
+	std::string m_FileName;
 #elif PLATFORM_WINDOWS
 	HANDLE m_FileHandle;
 	std::wstring m_FileName;

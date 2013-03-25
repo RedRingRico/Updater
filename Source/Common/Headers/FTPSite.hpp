@@ -1,8 +1,12 @@
 #ifndef __UPDATER_FTPSITE_HPP__
 #define __UPDATER_FTPSITE_HPP__
 
+#include <DataTypes.hpp>
+
+#ifdef PLATFORM_WINDOWS
 #ifndef _WINSOCK2API_
 #include <winsock2.h>
+#endif
 #endif
 
 #include <Log.hpp>
@@ -43,8 +47,10 @@ private:
 	// Used internally and for the initial connect to the server
 	int ConnectTo( SOCKET &p_Socket,
 		const std::string p_IPAddress, const std::string p_Port );
-
+	
+#ifdef PLATFORM_WINDOWS
 	WSADATA m_WSA;
+#endif
 	SOCKET	m_Socket;
 
 	bool m_SocketsInitialised;

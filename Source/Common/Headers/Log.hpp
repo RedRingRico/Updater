@@ -1,7 +1,9 @@
 #ifndef __UPDATER_LOG_HPP__
 #define __UPDATER_LOG_HPP__
 
+#ifdef PLATFORM_WINDOWS
 #include <Windows.h>
+#endif
 #include <exception>
 #include <string>
 
@@ -24,8 +26,8 @@ private:
 
 #ifdef PLATFORM_LINUX
 	FILE *m_pLogFile;
+	std::string m_LogFileName;
 #elif PLATFORM_WINDOWS
-
 	HANDLE m_LogFileHandle;
 	std::wstring m_LogFileName;
 #endif

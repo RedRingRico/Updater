@@ -10,6 +10,8 @@
 		}\
 	}
 
+#ifdef PLATFORM_WINDOWS
 int ConvertCharToWide( const char *p_pChar, wchar_t **p_ppWide );
+#endif
 
 #endif
