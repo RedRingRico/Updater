@@ -338,8 +338,13 @@ int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
 
 		int Port = ( PortA*256 ) + PortB;
 
+#ifdef CPP11
 		std::string PortStr;
 		PortStr = std::to_string( Port );
+#else
+		char PortStr[ 6 ];
+		itoa( Port, PortStr, 10 );
+#endif
 
 		p_pIPAddr->clear( );
 		p_pPort->clear( );

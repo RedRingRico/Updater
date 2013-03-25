@@ -1,0 +1,6 @@
+#ifndef __UPDATER_DATATYPES_WINDOWS_HPP__
+#define __UDDATER_DATATYPES_WINDOWS_HPP__
+
+
+#endif
+

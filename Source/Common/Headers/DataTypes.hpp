@@ -9,5 +9,7 @@
 #error Unknown platform
 #endif
 
+#include <Compiler.hpp>
+
 #endif
 
