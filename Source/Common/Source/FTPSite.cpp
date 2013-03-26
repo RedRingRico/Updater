@@ -225,17 +225,17 @@ int FTPSite::Connect( )
 	// Send the login details for the main client part of the connection,
 	// get some details about the server, and set the transmission type to
 	// 8-bit binary
-	this->ReceiveData( NULL );
-	this->SendCommand( "USER anonymous" );
-	this->ReceiveData( NULL );
-	this->SendCommand( "PASS anonymous@anyone.com" );
-	this->ReceiveData( NULL );
-	this->SendCommand( "SYST" );
-	this->ReceiveData( NULL );
-	this->SendCommand( "FEAT" );
-	this->ReceiveData( NULL );
-	this->SendCommand( "TYPE I" );
-	this->ReceiveData( NULL );
+	this->ReceiveData( m_Socket, NULL );
+	this->SendCommand( m_Socket, "USER anonymous" );
+	this->ReceiveData( m_Socket, NULL );
+	this->SendCommand( m_Socket, "PASS anonymous@anyone.com" );
+	this->ReceiveData( m_Socket, NULL );
+	this->SendCommand( m_Socket, "SYST" );
+	this->ReceiveData( m_Socket, NULL );
+	this->SendCommand( m_Socket, "FEAT" );
+	this->ReceiveData( m_Socket, NULL );
+	this->SendCommand( m_Socket, "TYPE I" );
+	this->ReceiveData( m_Socket, NULL );
 
 	return 0;
 }
@@ -243,8 +243,8 @@ int FTPSite::Connect( )
 int FTPSite::Disconnect( )
 {
 	m_Log.Print( "[INFO] Disconnecting\n" );
-	this->SendCommand( "QUIT" );
-	this->ReceiveData( NULL );
+	this->SendCommand( m_Socket, "QUIT" );
+	this->ReceiveData( m_Socket, NULL );
 
 #ifdef PLATFORM_WINDOWS
 	closesocket( m_Socket );
@@ -255,28 +255,30 @@ int FTPSite::Disconnect( )
 	return 0;
 }
 
-int FTPSite::SendCommand( const char *p_pCommand )
+int FTPSite::SendCommand( SOCKET p_Socket, const char *p_pCommand )
 {
 	m_Log.Print( "[INFO] Sending %s to server\n", p_pCommand );
 	std::string Command( p_pCommand );
 	Command.append( "\r\n" );
-	send( m_Socket, Command.c_str( ), Command.size( ), 0 );
+	send( p_Socket, Command.c_str( ), Command.size( ), 0 );
 
 	return 0;
 }
 
-int FTPSite::ReceiveData( char *p_pData, const size_t p_BufferSize )
+int FTPSite::ReceiveData( SOCKET p_Socket, char *p_pData,
+	const size_t p_BufferSize )
 {
 	char *pRecv = new char [ p_BufferSize ];
 	memset( pRecv, '\0', p_BufferSize );
 
-	recv( m_Socket, pRecv, p_BufferSize, 0 );
+	recv( p_Socket, pRecv, p_BufferSize, 0 );
 
 	if( p_pData != NULL )
 	{
 		strncpy( p_pData, pRecv, strlen( pRecv ) );
 		p_pData[ strlen( pRecv ) ] = '\0';
 	}
+
 	m_Log.Print( "[INFO] <Message from server>:\n%s\n", pRecv );
 
 	SAFE_DELETE_ARRAY( pRecv );
@@ -284,7 +286,8 @@ int FTPSite::ReceiveData( char *p_pData, const size_t p_BufferSize )
 	return 0;
 }
 
-int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
+int FTPSite::StartDataTransfer( SOCKET p_Socket, std::string *p_pIPAddr,
+	std::string *p_pPort )
 {
 	if( m_ActiveMode )
 	{
@@ -295,10 +298,10 @@ int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
 		// a,a,a,a,pa,pb
 		// Where a is a dotted-decimal version of the IP address and pa and pb
 		// are combined to create the port - ( pa*256 ) + pb
-		this->SendCommand( "PASV\r\n" );
+		this->SendCommand( p_Socket, "PASV\r\n" );
 		char RawBuffer[ 1024 ] = { '\0' };
 		memset( RawBuffer, '\0', 1024 );
-		this->ReceiveData( RawBuffer );
+		this->ReceiveData( p_Socket, RawBuffer );
 
 		std::string Buffer( RawBuffer );
 		size_t StartBuff = 0, EndBuff = 0;
@@ -355,6 +358,45 @@ int FTPSite::StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort )
 	return 0;
 }
 
+int FTPSite::DownloadFile( const char *p_pFileName )
+{
+	if( m_ActiveMode )
+	{
+	}
+	else
+	{
+			std::string IPAddr, Port;
+
+		this->StartDataTransfer( m_Socket, &IPAddr, &Port );
+
+		m_Log.Print( "[INFO] Connecting to %s:%s\n", IPAddr.c_str( ),
+			Port.c_str( ) );
+	
+		SOCKET Site;
+
+		if( this->ConnectTo( Site, IPAddr, Port ) != 0 )
+		{
+			m_Log.Print( "[ERROR] Could not list directory\n" );
+			return 1;
+		}
+
+		this->SendCommand( m_Socket, "SIZE projects/braindead/builds/windows/x86_32/latest/BrainDead_4.6.exe" );///projects" );
+
+		char Recv[ 1024 ] = { '\0' };
+		memset( Recv, '\0', 1024 );
+		this->ReceiveData( m_Socket, NULL );//Recv, 1024 );
+		this->ReceiveData( m_Socket, Recv, 1024 );
+		
+#ifdef PLATFORM_WINDOWS
+		closesocket( Site );
+#else
+		close( Site );
+#endif
+	
+	}
+	return 0;
+}
+
 int FTPSite::ListCurrentDirectory( std::list< std::string > &p_Results )
 {
 	if( m_ActiveMode )
@@ -364,7 +406,7 @@ int FTPSite::ListCurrentDirectory( std::list< std::string > &p_Results )
 	{
 		std::string IPAddr, Port;
 
-		this->StartDataTransfer( &IPAddr, &Port );
+		this->StartDataTransfer( m_Socket, &IPAddr, &Port );
 
 		m_Log.Print( "[INFO] Connecting to %s:%s\n", IPAddr.c_str( ),
 			Port.c_str( ) );
@@ -378,12 +420,13 @@ int FTPSite::ListCurrentDirectory( std::list< std::string > &p_Results )
 		}
 
 		// Get the list
-		this->SendCommand( "NLST" );
+		this->SendCommand( m_Socket, "NLST" );
 
 		char Recv[ 1024 ] = { '\0' };
 		memset( Recv, '\0', 1024 );
-		recv( Site, Recv, 1024, 0 );
-
+		this->ReceiveData( Site, Recv, 1024 );
+		this->ReceiveData( m_Socket, NULL );
+		
 		// Take the directories, ignore the current and parent directories
 		size_t Items = 0;
 		size_t CharStart = 0, CharEnd = 0;
@@ -424,8 +467,6 @@ int FTPSite::ListCurrentDirectory( std::list< std::string > &p_Results )
 			}
 			++CharEnd;
 		}
-
-		m_Log.Print( "[INFO] <Message from server>:\n%s\n", Recv );
 
 #ifdef PLATFORM_WINDOWS
 		closesocket( Site );

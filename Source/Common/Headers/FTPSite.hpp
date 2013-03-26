@@ -26,12 +26,15 @@ public:
 	int Disconnect( );
 
 	// SendCommand just sends commands.  No command validation is performed.
-	int SendCommand( const char *p_pCommand );
+	int SendCommand( SOCKET p_Socket, const char *p_pCommand );
 	// Puts what the server returns into a buffer of the size specified
-	int ReceiveData( char *p_pData, const size_t p_BufferSize = 1024 );
+	int ReceiveData( SOCKET p_Socket, char *p_pData, const size_t p_BufferSize = 1024 );
 
 	// Begin a file request and return the IP address and port to use
-	int StartDataTransfer( std::string *p_pIPAddr, std::string *p_pPort );
+	int StartDataTransfer( SOCKET p_Socket, std::string *p_pIPAddr,
+		std::string *p_pPort );
+
+	int DownloadFile( const char *p_pFileName );
 
 	// Abstractions for FTP's messages
 	int ListCurrentDirectory( std::list< std::string > &p_Results );

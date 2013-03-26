@@ -346,6 +346,7 @@ int main( int p_Argc, char **p_ppArgv )
 		}
 	}
 
+//	Site.DownloadFile( "projects/braindead/builds/windows/x86_32/latest/BrainDead_4.6.exe" );
 	
 	Site.Disconnect( );
 
